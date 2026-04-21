@@ -74,7 +74,7 @@ DAFTAR_DINAS = {
     "Kecamatan Raimanuk": "kec_raimanuk"
 }
 
-# --- UI STREAMLIT ---
+# --- UI ---
 st.set_page_config(page_title="Data Center Dinas", layout="wide")
 
 st.title("📂 Sistem Upload Data Dinas")
@@ -88,24 +88,28 @@ init_db()
 # MENU UPLOAD DATA
 # ==============================
 if menu == "Upload Data":
-    st.header("Upload File (CSV atau Excel)")
-    
-    # 🔥 PILIH DINAS (TIDAK KETIK)
-    nama_dinas_display = st.selectbox("Pilih Dinas / Instansi", list(DAFTAR_DINAS.keys()))
+    st.header("Upload File (CSV / Excel)")
+
+    nama_dinas_display = st.selectbox("Pilih Dinas", list(DAFTAR_DINAS.keys()))
     nama_dinas = DAFTAR_DINAS[nama_dinas_display]
 
-    uploaded_file = st.file_uploader("Pilih file", type=['csv', 'xlsx'])
+    uploaded_file = st.file_uploader("Pilih file", type=['csv', 'xlsx', 'xls'])
 
     if uploaded_file is not None:
         try:
-            # HANDLE CSV & EXCEL
+            # 🔥 SUPPORT SEMUA FORMAT
             if uploaded_file.name.endswith('.csv'):
                 try:
                     df = pd.read_csv(uploaded_file, encoding='utf-8')
                 except:
                     df = pd.read_csv(uploaded_file, encoding='latin1')
-            else:
+
+            elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
                 df = pd.read_excel(uploaded_file)
+
+            else:
+                st.error("Format tidak didukung")
+                st.stop()
 
             st.subheader("Preview Data")
             st.dataframe(df.head())
@@ -114,8 +118,7 @@ if menu == "Upload Data":
             st.write("Jumlah kolom:", df.shape[1])
 
             if st.button("Simpan ke Database"):
-                sukses = save_to_db(df, nama_dinas)
-                if sukses:
+                if save_to_db(df, nama_dinas):
                     st.success(f"✅ Data masuk ke tabel: {nama_dinas}")
 
         except Exception as e:
@@ -125,27 +128,43 @@ if menu == "Upload Data":
 # MENU LIHAT DATABASE
 # ==============================
 elif menu == "Lihat Database":
-    st.header("Isi Database")
+    st.header("📊 Data per Dinas")
 
     conn = sqlite3.connect(DB_NAME)
 
     try:
         tables = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table';", conn)
+        existing_tables = tables['name'].tolist() if not tables.empty else []
 
-        if not tables.empty:
-            selected_table = st.selectbox("Pilih Tabel", tables['name'])
+        nama_dinas_display = st.selectbox("Pilih Dinas", list(DAFTAR_DINAS.keys()))
+        table_name = DAFTAR_DINAS[nama_dinas_display]
 
-            if selected_table:
-                data_db = pd.read_sql(f"SELECT * FROM `{selected_table}`", conn)
-                st.dataframe(data_db)
+        if table_name in existing_tables:
+            data_db = pd.read_sql(f"SELECT * FROM `{table_name}`", conn)
 
-                if st.button("🗑️ Hapus Tabel"):
-                    conn.execute(f"DROP TABLE `{selected_table}`")
-                    conn.commit()
-                    st.success("Tabel dihapus")
-                    st.rerun()
+            st.subheader(f"Data: {nama_dinas_display}")
+            st.dataframe(data_db)
+
+            st.write("Jumlah data:", data_db.shape[0])
+
+            # 🔽 DOWNLOAD
+            csv = data_db.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                "⬇️ Download CSV",
+                csv,
+                file_name=f"{table_name}.csv",
+                mime="text/csv"
+            )
+
+            # 🗑️ HAPUS
+            if st.button("🗑️ Hapus Data Dinas Ini"):
+                conn.execute(f"DROP TABLE `{table_name}`")
+                conn.commit()
+                st.success("Data berhasil dihapus")
+                st.rerun()
+
         else:
-            st.info("Belum ada data.")
+            st.warning("Belum ada data untuk dinas ini.")
 
     except Exception as e:
         st.error(f"Error database: {e}")
