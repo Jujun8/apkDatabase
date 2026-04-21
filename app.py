@@ -21,6 +21,40 @@ def save_to_db(df, table_name):
         st.error(f"❌ Error simpan data: {e}")
         return False
 
+# --- FUNGSI AMAN BACA FILE ---
+def read_file(uploaded_file):
+    try:
+        if uploaded_file.name.endswith('.csv'):
+            try:
+                df = pd.read_csv(uploaded_file, encoding='utf-8')
+            except:
+                try:
+                    df = pd.read_csv(uploaded_file, encoding='latin1')
+                except:
+                    df = pd.read_csv(uploaded_file, sep=';')
+        
+        elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
+            df = pd.read_excel(uploaded_file)
+        else:
+            st.error("Format file tidak didukung")
+            return None
+
+        # 🔥 VALIDASI DATA
+        if df.empty:
+            st.error("❌ File kosong atau tidak memiliki data")
+            return None
+
+        if len(df.columns) == 0:
+            st.error("❌ File tidak memiliki header / kolom")
+            return None
+
+        return df
+
+    except Exception as e:
+        st.error(f"❌ Gagal membaca file: {e}")
+        return None
+
+
 # --- DAFTAR DINAS ---
 DAFTAR_DINAS = {
     "Sekretariat DPRD": "sekretariat_dprd",
@@ -96,21 +130,9 @@ if menu == "Upload Data":
     uploaded_file = st.file_uploader("Pilih file", type=['csv', 'xlsx', 'xls'])
 
     if uploaded_file is not None:
-        try:
-            # 🔥 SUPPORT SEMUA FORMAT
-            if uploaded_file.name.endswith('.csv'):
-                try:
-                    df = pd.read_csv(uploaded_file, encoding='utf-8')
-                except:
-                    df = pd.read_csv(uploaded_file, encoding='latin1')
+        df = read_file(uploaded_file)
 
-            elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
-                df = pd.read_excel(uploaded_file)
-
-            else:
-                st.error("Format tidak didukung")
-                st.stop()
-
+        if df is not None:
             st.subheader("Preview Data")
             st.dataframe(df.head())
 
@@ -120,9 +142,6 @@ if menu == "Upload Data":
             if st.button("Simpan ke Database"):
                 if save_to_db(df, nama_dinas):
                     st.success(f"✅ Data masuk ke tabel: {nama_dinas}")
-
-        except Exception as e:
-            st.error(f"❌ Gagal membaca file: {e}")
 
 # ==============================
 # MENU LIHAT DATABASE
@@ -147,16 +166,9 @@ elif menu == "Lihat Database":
 
             st.write("Jumlah data:", data_db.shape[0])
 
-            # 🔽 DOWNLOAD
             csv = data_db.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                "⬇️ Download CSV",
-                csv,
-                file_name=f"{table_name}.csv",
-                mime="text/csv"
-            )
+            st.download_button("⬇️ Download CSV", csv, f"{table_name}.csv", "text/csv")
 
-            # 🗑️ HAPUS
             if st.button("🗑️ Hapus Data Dinas Ini"):
                 conn.execute(f"DROP TABLE `{table_name}`")
                 conn.commit()
