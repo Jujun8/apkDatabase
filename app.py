@@ -5,7 +5,7 @@ import sqlite3
 # ========================
 # KONEKSI DATABASE (SQLITE)
 # ========================
-conn = sqlite3.connect("db_dinas.db")
+conn = sqlite3.connect("db_dinas.db", check_same_thread=False)
 
 # ========================
 # BUAT TABEL (JIKA BELUM ADA)
@@ -85,21 +85,6 @@ if cek["jumlah"][0] == 0:
     VALUES ('Laporan Bulanan'), ('Laporan Tahunan')
     """)
 
-    conn.execute("""
-    INSERT INTO data_laporan (id_dinas, id_kategori, tanggal, isi_data, status)
-    VALUES 
-    (1, 1, '2024-01-01', 'Data laporan 1', 'pending'),
-    (1, 2, '2024-02-01', 'Data laporan 2', 'disetujui'),
-    (2, 1, '2024-03-01', 'Data laporan 3', 'ditolak')
-    """)
-
-    conn.execute("""
-    INSERT INTO log_aktivitas (id_user, aktivitas, waktu)
-    VALUES 
-    (1, 'Login', '2024-01-01 10:00'),
-    (2, 'Input Data', '2024-01-02 11:00')
-    """)
-
     conn.commit()
 
 # ========================
@@ -110,10 +95,53 @@ df_dinas = pd.read_sql("SELECT * FROM dinas", conn)
 st.title("📊 Dashboard Dinas")
 
 # ========================
+# 🔥 UPLOAD EXCEL
+# ========================
+st.subheader("📥 Upload Data Laporan")
+
+uploaded_file = st.file_uploader("Upload file Excel", type=["xlsx"])
+
+if uploaded_file is not None:
+    df_excel = pd.read_excel(uploaded_file)
+
+    st.write("Preview Data:")
+    st.dataframe(df_excel)
+
+    # Validasi kolom
+    required_cols = ["tanggal", "isi_data", "status"]
+    if not all(col in df_excel.columns for col in required_cols):
+        st.error("Kolom harus: tanggal, isi_data, status")
+    else:
+        # Pilih dinas
+        dinas_option = st.selectbox("Pilih Dinas", df_dinas["nama_dinas"])
+        id_dinas_upload = int(df_dinas[df_dinas["nama_dinas"] == dinas_option]["id_dinas"].values[0])
+
+        # Ambil kategori
+        df_kategori = pd.read_sql("SELECT * FROM kategori_data", conn)
+        kategori_option = st.selectbox("Pilih Kategori", df_kategori["nama_kategori"])
+        id_kategori_upload = int(df_kategori[df_kategori["nama_kategori"] == kategori_option]["id_kategori"].values[0])
+
+        if st.button("Simpan Data"):
+            for _, row in df_excel.iterrows():
+                conn.execute("""
+                INSERT INTO data_laporan (id_dinas, id_kategori, tanggal, isi_data, status)
+                VALUES (?, ?, ?, ?, ?)
+                """, (
+                    id_dinas_upload,
+                    id_kategori_upload,
+                    str(row["tanggal"]),
+                    row["isi_data"],
+                    row["status"]
+                ))
+
+            conn.commit()
+            st.success("Data berhasil diupload!")
+
+# ========================
 # PILIH DINAS
 # ========================
 pilih_dinas = st.selectbox(
-    "Pilih Dinas",
+    "Pilih Dinas untuk Melihat Data",
     df_dinas["nama_dinas"]
 )
 
