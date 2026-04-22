@@ -26,7 +26,7 @@ def get_opd_data():
         "Badan Pengelola Keuangan dan Aset Daerah", "Bagian Hukum", "Bagian Organisasi Setda Belu",
         # Kelompok 2
         "Dinas Kependudukan dan Pencatatan Sipil", "Dinas Koperasi, Tenaga Kerja dan Transmigrasi",
-        "Dinas Pariwisata dan Kebudayaan", "DP3AP2KB", "DPMPTSP", "BPBD", "Badan Pendapatan Daerah",
+        "Dinas Pariwisata dan Kebudayaan", "BPBD", "Badan Pendapatan Daerah",
         "Badan Pengelola Perbatasan Daerah", "Bappelitbangda", "RSUD Mgr. Gabriel Manek, SVD Atambua",
         "Bagian Kesejahteraan Rakyat Setda Belu", "Bagian Pemerintahan Setda Belu",
         # Kelompok 3
