@@ -3,9 +3,104 @@ import pandas as pd
 import sqlite3
 
 # ========================
-# KONEKSI DATABASE
+# KONEKSI DATABASE (SQLITE)
 # ========================
 conn = sqlite3.connect("db_dinas.db")
+
+# ========================
+# BUAT TABEL (JIKA BELUM ADA)
+# ========================
+conn.execute("""
+CREATE TABLE IF NOT EXISTS dinas (
+    id_dinas INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama_dinas TEXT,
+    alamat TEXT,
+    kontak TEXT
+)
+""")
+
+conn.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id_user INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama TEXT,
+    username TEXT,
+    password TEXT,
+    role TEXT,
+    id_dinas INTEGER
+)
+""")
+
+conn.execute("""
+CREATE TABLE IF NOT EXISTS kategori_data (
+    id_kategori INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama_kategori TEXT
+)
+""")
+
+conn.execute("""
+CREATE TABLE IF NOT EXISTS data_laporan (
+    id_laporan INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_dinas INTEGER,
+    id_kategori INTEGER,
+    tanggal TEXT,
+    isi_data TEXT,
+    status TEXT
+)
+""")
+
+conn.execute("""
+CREATE TABLE IF NOT EXISTS log_aktivitas (
+    id_log INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_user INTEGER,
+    aktivitas TEXT,
+    waktu TEXT
+)
+""")
+
+conn.commit()
+
+# ========================
+# INSERT DATA DUMMY (JIKA KOSONG)
+# ========================
+cek = pd.read_sql("SELECT COUNT(*) as jumlah FROM dinas", conn)
+
+if cek["jumlah"][0] == 0:
+    conn.execute("""
+    INSERT INTO dinas (nama_dinas, alamat, kontak)
+    VALUES 
+    ('Dinas Kominfo', 'Jl. Merdeka', '08123456789'),
+    ('Dinas Pendidikan', 'Jl. Sekolah', '08234567890')
+    """)
+
+    conn.execute("""
+    INSERT INTO users (nama, username, password, role, id_dinas)
+    VALUES 
+    ('Admin Kominfo', 'admin1', '123', 'admin', 1),
+    ('User Kominfo', 'user1', '123', 'dinas', 1),
+    ('Admin Pendidikan', 'admin2', '123', 'admin', 2)
+    """)
+
+    conn.execute("""
+    INSERT INTO kategori_data (nama_kategori)
+    VALUES ('Laporan Bulanan'), ('Laporan Tahunan')
+    """)
+
+    conn.execute("""
+    INSERT INTO data_laporan (id_dinas, id_kategori, tanggal, isi_data, status)
+    VALUES 
+    (1, 1, '2024-01-01', 'Data laporan 1', 'pending'),
+    (1, 2, '2024-02-01', 'Data laporan 2', 'disetujui'),
+    (2, 1, '2024-03-01', 'Data laporan 3', 'ditolak')
+    """)
+
+    conn.execute("""
+    INSERT INTO log_aktivitas (id_user, aktivitas, waktu)
+    VALUES 
+    (1, 'Login', '2024-01-01 10:00'),
+    (2, 'Input Data', '2024-01-02 11:00')
+    """)
+
+    conn.commit()
 
 # ========================
 # LOAD DINAS
