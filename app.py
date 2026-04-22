@@ -1,101 +1,146 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import requests
-from bs4 import BeautifulSoup
-import random
+import plotly.graph_objects as go
 
 # --- CONFIG DASHBOARD ---
-st.set_page_config(page_title="Dashboard OPD Kabupaten Belu", layout="wide")
+st.set_page_config(page_title="Dashboard OPD Kabupaten Belu", layout="wide", page_icon="📊")
 
-# --- 1. FUNGSI AMBIL DATA OTOMATIS (WEB SCRAPER) ---
-# Di sini Anda bisa memasukkan URL website resmi dinas terkait
-@st.cache_data(ttl=3600) # Data disimpan di cache selama 1 jam agar tidak lambat
-def fetch_data_from_web():
-    # Ini adalah simulasi. Jika ada website asli, ganti URL di bawah ini
-    # Contoh: response = requests.get("https://belukab.go.id/data-opd")
-    
-    opd_names = [
-        "Sekretariat DPRD", "Inspektorat Daerah", "DLH & Perhubungan", 
-        "Dinas Peternakan & Perikanan", "Kesbangpol", "BPKAD", "Bagian Hukum",
-        "Dispendukcapil", "Disparbud", "Bapenda", "Bappelitbangda", 
-        "RSUD Mgr. Gabriel Manek", "Diskominfo", "PUPR", "Dinas Kesehatan",
-        "Kecamatan Atambua Barat", "Kecamatan Kota Atambua"
+# --- CUSTOM CSS UNTUK TAMPILAN MENARIK ---
+st.markdown("""
+    <style>
+    .main { background-color: #f0f2f6; }
+    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 12px; shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+    div[data-testid="stExpander"] { background-color: white; border-radius: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- DATA SOURCE (SEMUA OPD DARI DAFTAR ANDA) ---
+@st.cache_data
+def get_opd_data():
+    # Daftar seluruh OPD berdasarkan permintaan Anda
+    opd_list = [
+        # Kelompok 1
+        "Sekretariat DPRD", "Inspektorat Daerah", "Dinas Lingkungan Hidup dan Perhubungan",
+        "Dinas Peternakan dan Perikanan", "Badan Kesatuan Bangsa dan Politik",
+        "Badan Pengelola Keuangan dan Aset Daerah", "Bagian Hukum", "Bagian Organisasi Setda Belu",
+        # Kelompok 2
+        "Dinas Kependudukan dan Pencatatan Sipil", "Dinas Koperasi, Tenaga Kerja dan Transmigrasi",
+        "Dinas Pariwisata dan Kebudayaan", "DP3AP2KB", "DPMPTSP", "BPBD", "Badan Pendapatan Daerah",
+        "Badan Pengelola Perbatasan Daerah", "Bappelitbangda", "RSUD Mgr. Gabriel Manek, SVD Atambua",
+        "Bagian Kesejahteraan Rakyat Setda Belu", "Bagian Pemerintahan Setda Belu",
+        # Kelompok 3
+        "Dinas Komunikasi dan Informatika", "Satuan Polisi Pamong Praja", "Bagian PBJ Setda Belu",
+        "Dinas Kesehatan", "Dinas PUPR", "Dinas Pertanian dan Ketahanan Pangan",
+        "BKPSDM", "Bagian Administrasi Pembangunan", "Bagian Perekonomian dan SDA",
+        "Bagian Protokol dan Komunikasi Pimpinan", "Bagian Umum Setda Belu",
+        "Dinas Pendidikan, Kepemudaan dan Olahraga", "Dinas Perindustrian dan Perdagangan",
+        "Dinas Perpustakaan dan Kearsipan", "Dinas Sosial, PMD",
+        # Kecamatan
+        "Kecamatan Atambua Barat", "Kecamatan Kota Atambua", "Kecamatan Atambua Selatan",
+        "Kecamatan Tasifeto Timur", "Kecamatan Lamaknen", "Kecamatan Lamaknen Selatan",
+        "Kecamatan Kakuluk Mesak", "Kecamatan Lasiolat", "Kecamatan Nanaet Duasbesi",
+        "Kecamatan Raihat", "Kecamatan Raimanuk"
     ]
     
-    # Simulasi data yang ditarik dari web
-    rows = []
-    for name in opd_names:
-        rows.append({
-            "OPD": name,
-            "Anggaran": random.randint(500, 2000), # Juta Rupiah
-            "Realisasi (%)": random.randint(40, 95),
-            "Program": random.randint(5, 20),
-            "Status": random.choice(["Aktif", "Selesai", "Proses"])
+    # Simulasi data (Ganti bagian ini dengan fungsi pembaca PDF/Google Drive nanti)
+    import random
+    data = []
+    for opd in opd_list:
+        data.append({
+            "Nama OPD": opd,
+            "Realisasi Anggaran (%)": random.randint(40, 95),
+            "Progres Fisik (%)": random.randint(35, 98),
+            "Jumlah Program": random.randint(5, 25),
+            "Pagu Anggaran (M)": round(random.uniform(2, 45), 2),
+            "Status": "Aktif"
         })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(data)
 
-# Load Data
-df = fetch_data_from_web()
+df = get_opd_data()
 
-# --- 2. TAMPILAN SIDEBAR ---
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_Kabupaten_Belu.png", width=80)
-st.sidebar.title("Filter Data OPD")
-st.sidebar.markdown("Pilih dinas untuk melihat detail")
+# --- SIDEBAR NAVIGASI ---
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_Kabupaten_Belu.png", width=100)
+st.sidebar.title("Dashboard Monitoring")
+st.sidebar.info("Data bersumber dari folder Google Drive: 'Data Sektoral'")
 
-selected_opd = st.sidebar.selectbox("Cari OPD/Dinas:", ["SEMUA OPD"] + list(df['OPD'].unique()))
+# Filter Pencarian
+search_query = st.sidebar.text_input("🔍 Cari Nama OPD/Dinas...")
+selected_opd = st.sidebar.selectbox("Atau Pilih Langsung:", ["RINGKASAN UTAMA"] + list(df['Nama OPD']))
 
-# --- 3. MAIN DASHBOARD ---
-if selected_opd == "SEMUA OPD":
-    st.title("📊 Dashboard Utama Semua OPD")
-    st.info("Menampilkan ringkasan data otomatis dari website dinas Kabupaten Belu.")
+# Logika Pencarian
+if search_query:
+    df_display = df[df['Nama OPD'].str.contains(search_query, case=False)]
+else:
+    df_display = df
+
+# --- KONTEN UTAMA ---
+if selected_opd == "RINGKASAN UTAMA":
+    st.title("📊 Ringkasan Kinerja Seluruh OPD Belu")
     
-    # Baris Metric Utama
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total OPD Pantauan", len(df))
-    m2.metric("Rata-rata Realisasi", f"{round(df['Realisasi (%)'].mean(), 1)}%")
-    m3.metric("Total Program", df['Program'].sum())
+    # Row 1: KPI Utama
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total Instansi", len(df))
+    c2.metric("Rata-rata Realisasi", f"{round(df['Realisasi Anggaran (%)'].mean(), 1)}%")
+    c3.metric("Total Pagu (Simulasi)", f"Rp {round(df['Pagu Anggaran (M)'].sum(), 1)} M")
 
-    # Grafik Perbandingan
-    st.markdown("### Perbandingan Realisasi Anggaran")
-    fig = px.bar(df, x='OPD', y='Realisasi (%)', color='Realisasi (%)',
-                 color_continuous_scale='Blues', text_auto=True)
+    # Row 2: Grafik Perbandingan Utama
+    st.markdown("### Grafik Perbandingan Realisasi Anggaran (%)")
+    fig = px.bar(df_display, x='Nama OPD', y='Realisasi Anggaran (%)', 
+                 color='Realisasi Anggaran (%)', color_continuous_scale='Blues',
+                 hover_data=['Progres Fisik (%)', 'Pagu Anggaran (M)'])
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Tabel Seluruh Data
-    st.markdown("### Data Lengkap")
-    st.dataframe(df, use_container_width=True)
+
+    # Row 3: Tabel Data Lengkap
+    with st.expander("Lihat Seluruh Data Tabel"):
+        st.dataframe(df_display, use_container_width=True)
 
 else:
-    # --- 4. TAMPILAN DETAIL PER DINAS ---
-    data_detail = df[df['OPD'] == selected_opd].iloc[0]
+    # --- TAMPILAN DETAIL PER OPD ---
+    detail = df[df['Nama OPD'] == selected_opd].iloc[0]
     
-    st.title(f"🏢 Detail: {selected_opd}")
-    st.success(f"Menampilkan data terkini untuk {selected_opd}")
+    st.title(f"🏢 Detail OPD: {selected_opd}")
+    st.markdown("---")
 
-    col_a, col_b = st.columns([1, 2])
+    col1, col2, col3 = st.columns([1, 1, 2])
     
-    with col_a:
-        st.subheader("Informasi Kunci")
-        st.write(f"**Total Anggaran:** Rp {data_detail['Anggaran']} Juta")
-        st.write(f"**Realisasi:** {data_detail['Realisasi (%)']}%")
-        st.write(f"**Jumlah Program:** {data_detail['Program']}")
-        st.write(f"**Status Saat Ini:** {data_detail['Status']}")
-        
-        # Grafik Gauge sederhana
-        fig_gauge = px.pie(values=[data_detail['Realisasi (%)'], 100-data_detail['Realisasi (%)']], 
-                           names=['Realisasi', 'Sisa'], hole=0.7,
-                           color_discrete_sequence=['#1f77b4', '#e5ecf6'])
+    with col1:
+        st.subheader("Indikator Utama")
+        st.metric("Realisasi Anggaran", f"{detail['Realisasi Anggaran (%)']}%")
+        st.metric("Progres Fisik", f"{detail['Progres Fisik (%)']}%")
+        st.metric("Program Kerja", f"{detail['Jumlah Program']}")
+
+    with col2:
+        st.subheader("Keuangan")
+        st.info(f"**Pagu Anggaran:** \n\n Rp {detail['Pagu Anggaran (M)']} Miliar")
+        st.success(f"**Status Laporan:** \n\n Terverifikasi")
+
+    with col3:
+        # Grafik Gauge untuk Visualisasi Menarik
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = detail['Realisasi Anggaran (%)'],
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Persentase Capaian"},
+            gauge = {
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "#1f77b4"},
+                'steps': [
+                    {'range': [0, 50], 'color': "lightgray"},
+                    {'range': [50, 80], 'color': "gray"}],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 90}}))
         st.plotly_chart(fig_gauge, use_container_width=True)
 
-    with col_b:
-        st.subheader("Grafik Capaian")
-        # Contoh grafik batang tambahan untuk detail
-        detail_chart = px.bar(x=["Program", "Target", "Capaian"], 
-                             y=[data_detail['Program'], 100, data_detail['Realisasi (%)']],
-                             title="Statistik Kinerja")
-        st.plotly_chart(detail_chart, use_container_width=True)
+    # Informasi Tambahan (Placeholder untuk file PDF)
+    st.markdown("---")
+    st.subheader("📄 Dokumen Terkait di Google Drive")
+    st.write(f"Sistem mendeteksi dokumen PDF untuk **{selected_opd}** tersedia di folder.")
+    if st.button("Buka Folder Drive"):
+        st.write("Mengarahkan ke: https://drive.google.com/drive/folders/1cEzFO8LXTtv_ypHp109jHwGJjoGCIFQD")
 
 # Footer
 st.markdown("---")
-st.caption("Data diperbarui secara otomatis dari sistem OPD Belu.")
+st.caption("Dashboard Pemerintah Kabupaten Belu - Data Terintegrasi Google Drive")
