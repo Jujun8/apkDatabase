@@ -3,7 +3,7 @@ import pandas as pd
 import mysql.connector
 
 # ========================
-# KONFIGURASI DATABASE
+# KONEKSI DATABASE
 # ========================
 conn = mysql.connector.connect(
     host="localhost",
@@ -13,17 +13,11 @@ conn = mysql.connector.connect(
 )
 
 # ========================
-# LOAD DATA DINAS
+# LOAD DINAS
 # ========================
-query_dinas = "SELECT * FROM dinas"
-df_dinas = pd.read_sql(query_dinas, conn)
+df_dinas = pd.read_sql("SELECT * FROM dinas", conn)
 
-# ========================
-# UI DASHBOARD
-# ========================
-st.set_page_config(page_title="Dashboard Dinas", layout="wide")
-
-st.title("📊 Dashboard Data Dinas")
+st.title("📊 Dashboard Dinas")
 
 # ========================
 # PILIH DINAS
@@ -33,7 +27,6 @@ pilih_dinas = st.selectbox(
     df_dinas["nama_dinas"]
 )
 
-# Ambil data dinas terpilih
 dinas_terpilih = df_dinas[df_dinas["nama_dinas"] == pilih_dinas]
 id_dinas = int(dinas_terpilih["id_dinas"].values[0])
 
@@ -41,40 +34,60 @@ id_dinas = int(dinas_terpilih["id_dinas"].values[0])
 # DETAIL DINAS
 # ========================
 st.subheader("🏢 Detail Dinas")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.write("**Nama Dinas:**", dinas_terpilih["nama_dinas"].values[0])
-    st.write("**Alamat:**", dinas_terpilih["alamat"].values[0])
-
-with col2:
-    st.write("**Kontak:**", dinas_terpilih["kontak"].values[0])
+st.write(dinas_terpilih)
 
 # ========================
-# DATA USER
+# USER DINAS
 # ========================
-query_user = f"""
-SELECT * FROM users WHERE id_dinas = {id_dinas}
-"""
-df_user = pd.read_sql(query_user, conn)
+df_user = pd.read_sql(
+    f"SELECT * FROM users WHERE id_dinas = {id_dinas}", conn
+)
 
-st.subheader("👥 Data User")
-
-# METRIK
+st.subheader("👥 User Dinas")
 st.metric("Jumlah User", len(df_user))
-
-# TABEL
-st.dataframe(df_user, use_container_width=True)
+st.dataframe(df_user)
 
 # ========================
-# OPTIONAL: FILTER ROLE
+# DATA LAPORAN (JOIN)
 # ========================
-if not df_user.empty:
-    role_filter = st.selectbox("Filter Role", ["Semua"] + list(df_user["role"].unique()))
+query_laporan = f"""
+SELECT 
+    l.id_laporan,
+    l.tanggal,
+    k.nama_kategori,
+    l.status,
+    l.isi_data
+FROM data_laporan l
+JOIN kategori_data k ON l.id_kategori = k.id_kategori
+WHERE l.id_dinas = {id_dinas}
+"""
 
-    if role_filter != "Semua":
-        df_user = df_user[df_user["role"] == role_filter]
+df_laporan = pd.read_sql(query_laporan, conn)
 
-    st.write("### Data Setelah Filter")
-    st.dataframe(df_user, use_container_width=True)
+st.subheader("📄 Data Laporan")
+st.metric("Jumlah Laporan", len(df_laporan))
+st.dataframe(df_laporan)
+
+# ========================
+# GRAFIK STATUS
+# ========================
+if not df_laporan.empty:
+    st.subheader("📊 Statistik Status Laporan")
+    st.bar_chart(df_laporan["status"].value_counts())
+
+# ========================
+# LOG AKTIVITAS
+# ========================
+query_log = f"""
+SELECT l.aktivitas, l.waktu, u.nama
+FROM log_aktivitas l
+JOIN users u ON l.id_user = u.id_user
+WHERE u.id_dinas = {id_dinas}
+ORDER BY l.waktu DESC
+LIMIT 10
+"""
+
+df_log = pd.read_sql(query_log, conn)
+
+st.subheader("📝 Log Aktivitas")
+st.dataframe(df_log)
