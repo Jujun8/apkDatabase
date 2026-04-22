@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
+import sqlite3
 
 # ========================
 # KONEKSI DATABASE
 # ========================
-conn = mysql.connector.connect(
+conn = sqlite3.connect("db_dinas.db")
     host="localhost",
     user="root",
     password="08102005",
