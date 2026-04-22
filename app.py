@@ -6,11 +6,6 @@ import sqlite3
 # KONEKSI DATABASE
 # ========================
 conn = sqlite3.connect("db_dinas.db")
-    host="localhost",
-    user="root",
-    password="",
-    database="db_dinas"
-)
 
 # ========================
 # LOAD DINAS
@@ -48,7 +43,7 @@ st.metric("Jumlah User", len(df_user))
 st.dataframe(df_user)
 
 # ========================
-# DATA LAPORAN (JOIN)
+# DATA LAPORAN
 # ========================
 query_laporan = f"""
 SELECT 
@@ -69,7 +64,7 @@ st.metric("Jumlah Laporan", len(df_laporan))
 st.dataframe(df_laporan)
 
 # ========================
-# GRAFIK STATUS
+# GRAFIK
 # ========================
 if not df_laporan.empty:
     st.subheader("📊 Statistik Status Laporan")
