@@ -30,14 +30,6 @@ st.markdown("""
         border-right: 1px solid #e2e8f0;
     }
 
-    /* Container untuk grafik */
-    .chart-container {
-        background-color: white;
-        padding: 20px;
-        border-radius: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    }
-
     /* Tombol Custom */
     .stButton>button {
         border-radius: 12px;
@@ -45,6 +37,11 @@ st.markdown("""
         color: white;
         border: none;
         padding: 10px 24px;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #4F46E5;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -80,7 +77,8 @@ def get_opd_data():
             "Progres Fisik (%)": random.randint(35, 98),
             "Jumlah Program": random.randint(5, 25),
             "Pagu Anggaran (M)": round(random.uniform(2, 45), 2),
-            "Kategori": random.choice(["Kesehatan", "Infrastruktur", "Sosial", "Administrasi"])
+            "Kategori": random.choice(["Kesehatan", "Infrastruktur", "Sosial", "Administrasi"]),
+            "Status": random.choice(["Selesai", "Proses"])
         })
     return pd.DataFrame(data)
 
@@ -101,7 +99,7 @@ if selected_opd == "RINGKASAN UTAMA":
     st.title("Hello, Admin! 👋")
     st.markdown("Berikut adalah ringkasan kinerja OPD Kabupaten Belu.")
     
-    # Row 1: KPI Utama (Gaya kartu melengkung)
+    # Row 1: KPI Utama
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Instansi", len(df), "↑ 2")
     c2.metric("Rata-rata Realisasi", f"{round(df['Realisasi Anggaran (%)'].mean(), 1)}%", "5.4%")
@@ -110,7 +108,7 @@ if selected_opd == "RINGKASAN UTAMA":
 
     st.markdown("---")
 
-    # Row 2: Grafik Utama (Gaya Foto yang Anda Kirim)
+    # Row 2: Grafik Utama
     col_left, col_right = st.columns([2, 1])
 
     with col_left:
@@ -119,7 +117,15 @@ if selected_opd == "RINGKASAN UTAMA":
                      color='Realisasi Anggaran (%)', 
                      color_continuous_scale='Blues',
                      template="plotly_white")
-        fig.update_layout(bordercolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        
+        # --- PERBAIKAN BARIS 122 ---
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor='#f1f5f9'),
+            margin=dict(l=0, r=0, t=30, b=0)
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
@@ -129,13 +135,13 @@ if selected_opd == "RINGKASAN UTAMA":
         fig_pie.update_layout(showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig_pie, use_container_width=True)
 
-    # Row 3: Tabel Data (Gaya Order List)
+    # Row 3: Tabel Data (Gaya Order List Modern)
     st.subheader("📋 Daftar Rincian Kerja OPD")
-    st.dataframe(df_display[['Nama OPD', 'Kategori', 'Realisasi Anggaran (%)', 'Progres Fisik (%)', 'Status' if 'Status' in df.columns else 'Nama OPD']], 
+    st.dataframe(df_display[['Nama OPD', 'Kategori', 'Realisasi Anggaran (%)', 'Progres Fisik (%)', 'Status']], 
                  use_container_width=True)
 
 else:
-    # --- TAMPILAN DETAIL PER OPD (Gaya Modern) ---
+    # --- TAMPILAN DETAIL PER OPD ---
     detail = df[df['Nama OPD'] == selected_opd].iloc[0]
     st.title(f"🏢 {selected_opd}")
     
@@ -148,16 +154,23 @@ else:
     fig_gauge = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = detail['Realisasi Anggaran (%)'],
-        gauge = {'axis': {'range': [None, 100]}, 'bar': {'color': "#6366F1"}}
+        gauge = {
+            'axis': {'range': [None, 100]}, 
+            'bar': {'color': "#6366F1"},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "#f1f5f9"
+        }
     ))
-    fig_gauge.update_layout(height=300)
+    fig_gauge.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)")
     st.plotly_chart(fig_gauge, use_container_width=True)
 
     # Tombol Folder
     st.markdown("---")
     st.subheader("📄 Arsip Digital")
+    st.write(f"Mencari dokumen pendukung untuk {selected_opd}...")
     if st.button("📁 Buka Folder Google Drive"):
-        st.write("Membuka folder 'Data Sektoral'...")
+        st.success("Mengarahkan ke Folder Drive Sektoral...")
 
 st.markdown("---")
 st.caption("Pemerintah Kabupaten Belu - Dashboard Data Terintegrasi 2026")
