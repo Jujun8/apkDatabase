@@ -8,7 +8,7 @@ import sqlite3
 conn = sqlite3.connect("db_dinas.db")
     host="localhost",
     user="root",
-    password="08102005",
+    password="",
     database="db_dinas"
 )
 
