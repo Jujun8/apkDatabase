@@ -39,11 +39,11 @@ def get_hukum_data():
 # --- LOAD DATA KOMINFO (CSV) ---
 def load_kominfo_data():
     try:
-        asn = pd.read_csv("ASN-Berpendidikan-TIK.csv")
-        sarpras = pd.read_csv("Data-Sarana-dan-Prasarana-Diskominfo.csv")
-        internet = pd.read_csv("Data-Internet-OPD-Beserta-Kapasitasnya-.csv")
-        tower = pd.read_csv("DATA-TOWER.csv")
-        duk = pd.read_csv("DUK-KOMINFO-Upload.csv")
+        asn = pd.read_csv("/content/ASN-Berpendidikan-TIK.csv")
+        sarpras = pd.read_csv("/content/Data-Sarana-dan-Prasarana-Diskominfo.csv")
+        internet = pd.read_csv("/content/Data-Internet-OPD-Beserta-Kapasitasnya-.csv")
+        tower = pd.read_csv("/content/DATA-TOWER.csv")
+        duk = pd.read_csv("/content/DUK-KOMINFO-Upload.csv")
         return asn, sarpras, internet, tower, duk
     except:
         return None, None, None, None, None
