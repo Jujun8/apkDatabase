@@ -48,7 +48,7 @@ def get_hukum_data():
 # --- LOAD DATA KOMINFO (CSV) ---
 def load_kominfo_data():
     try:
-        asn = pd.read_csv("/content/ASN-Berpendidikan-TIK.csv")
+        asn = pd.read_csv("KOMINFO/ASN-Berpendidikan-TIK.csv")
         sarpras = pd.read_csv("/content/Data-Sarana-dan-Prasarana-Diskominfo.csv")
         internet = pd.read_csv("/content/Data-Internet-OPD-Beserta-Kapasitasnya-.csv")
         tower = pd.read_csv("/content/DATA-TOWER.csv")
