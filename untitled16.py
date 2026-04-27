@@ -224,11 +224,41 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
 
 
-    # DEBUG (bisa dihapus nanti
+    # DEBUG (bisa dihapus nanti)
+
+    if os.path.exists("KOMINFO"):
+
+        st.write("📂 Isi folder data:", os.listdir("KOMINFO"))
+
+    else:
+
+        st.error("Folder 'data' tidak ditemukan")
 
 
 
-        
+    asn, sarpras, internet, tower, duk = load_kominfo_data()
+
+
+
+    if asn is not None:
+
+
+
+        # KPI
+
+        c1, c2, c3, c4 = st.columns(4)
+
+        c1.metric("ASN TIK", len(asn))
+
+        c2.metric("Sarpras", len(sarpras))
+
+        c3.metric("OPD Internet", len(internet))
+
+        c4.metric("Tower", len(tower))
+
+
+
+        st.markdown("---")
 
 
 
