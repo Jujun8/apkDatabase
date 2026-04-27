@@ -71,7 +71,7 @@ opd_groups = {
     "SEKRETARIAT & BADAN": [
         "Sekretariat DPRD", "Inspektorat Daerah", "Badan Kesatuan Bangsa dan Politik",
         "Badan Pengelola Keuangan dan Aset Daerah", "Bappelitbangda", "BPBD", 
-        "Badan Pendapatan Daerah", "Badan Pengelola Perbatasan Daerah", "BKPSDM"
+        "Badan Pendapatan Daerah", "Badan Pengelola Perbatasan Daerah", "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia"
     ],
     "DINAS": [
         "Dinas Lingkungan Hidup dan Perhubungan", "Dinas Peternakan dan Perikanan",
