@@ -50,26 +50,42 @@ def load_kominfo_data():
         return None, None, None, None, None
 
 # --- LOAD DATA BKPSDM (TAHUN 2020) ---
-def load_bkpsdm_data():
-    try:
-        base_path = "BKPSDM"
+if opd_select == "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia":
+    
+    # FILTER TAHUN (2020 - 2024)
+    st.markdown('<div class="opd-card">', unsafe_allow_html=True)
+    col_filter, _ = st.columns([1, 2])
+    selected_year = col_filter.selectbox("Pilih Tahun Data:", [2020, 2021, 2022, 2023, 2024], index=0)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.subheader(f"📊 Dashboard Kepegawaian - Tahun {selected_year}")
+    
+    # Load data berdasarkan folder BKPSDM dan tahun yang dipilih
+    data_items = load_data_by_year("BKPSDM", selected_year)
+    
+    if not data_items:
+        st.warning(f"⚠️ Data untuk tahun {selected_year} belum tersedia di folder BKPSDM.")
+        st.info("Pastikan file CSV memiliki angka tahun di dalam namanya (contoh: 'Data Pegawai... 2020.csv').")
+    else:
+        # Menampilkan data dalam Tab secara dinamis
+        tab_names = [item['nama_file'][:30] + "..." if len(item['nama_file']) > 30 else item['nama_file'] for item in data_items]
+        tabs = st.tabs(tab_names)
         
-        # Fungsi khusus membaca CSV dengan melompati baris judul atas agar header tabel terbaca benar
-        def read_bkpsdm_csv(filename, skip=0):
-            path = os.path.join(base_path, filename)
-            if not os.path.exists(path):
-                return None
-            return pd.read_csv(path, skiprows=skip, encoding='latin-1')
-
-        # Membaca file spesifik tahun 2020 yang Anda berikan
-        # skiprows disesuaikan dengan struktur file CSV yang biasanya memiliki judul di baris 1-2
-        instansi_2020 = read_bkpsdm_csv("Data Pegawai Berdasarkan Komposisi Instansi di Kabupaten Belu Tahun 2020.csv", skip=2)
-        golongan_2020 = read_bkpsdm_csv("Data Pegawai Berdasarkan Golongan Ruang di Kabupaten Belu Tahun 2020.csv", skip=4)
-
-        return instansi_2020, golongan_2020
-    except Exception as e:
-        st.error(f"❌ Gagal memuat data BKPSDM: {e}")
-        return None, None
+        for i, item in enumerate(data_items):
+            with tabs[i]:
+                df = item['data']
+                st.write(f"**Sumber File:** `{item['nama_file']}`")
+                st.dataframe(df, use_container_width=True)
+                
+                # Visualisasi Otomatis Sederhana
+                # Mencari kolom numerik untuk grafik
+                num_cols = df.select_dtypes(include=['number']).columns.tolist()
+                cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+                
+                if len(num_cols) > 0 and len(cat_cols) > 0:
+                    fig = px.bar(df.head(20), x=cat_cols[0], y=num_cols[0], 
+                                 title=f"Visualisasi: {cat_cols[0]} vs {num_cols[0]}")
+                    st.plotly_chart(fig, use_container_width=True)
 
 # --- KONFIGURASI OPD ---
 opd_groups = {
