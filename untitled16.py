@@ -28,7 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- LOAD DATA KOMINFO ---
+# --- FUNGSI LOAD DATA KOMINFO ---
 def load_kominfo_data():
     try:
         base_path = "KOMINFO"
@@ -49,43 +49,33 @@ def load_kominfo_data():
     except:
         return None, None, None, None, None
 
-# --- LOAD DATA BKPSDM (TAHUN 2020) ---
-if opd_select == "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia":
+# --- FUNGSI LOAD DATA BKPSDM (PINTAR & DINAMIS) ---
+def load_data_by_year(opd_folder, year):
+    if not os.path.exists(opd_folder):
+        return []
     
-    # FILTER TAHUN (2020 - 2024)
-    st.markdown('<div class="opd-card">', unsafe_allow_html=True)
-    col_filter, _ = st.columns([1, 2])
-    selected_year = col_filter.selectbox("Pilih Tahun Data:", [2020, 2021, 2022, 2023, 2024], index=0)
-    st.markdown('</div>', unsafe_allow_html=True)
+    files = [f for f in os.listdir(opd_folder) if f.endswith('.csv') and str(year) in f]
     
-    st.subheader(f"📊 Dashboard Kepegawaian - Tahun {selected_year}")
-    
-    # Load data berdasarkan folder BKPSDM dan tahun yang dipilih
-    data_items = load_data_by_year("BKPSDM", selected_year)
-    
-    if not data_items:
-        st.warning(f"⚠️ Data untuk tahun {selected_year} belum tersedia di folder BKPSDM.")
-        st.info("Pastikan file CSV memiliki angka tahun di dalam namanya (contoh: 'Data Pegawai... 2020.csv').")
-    else:
-        # Menampilkan data dalam Tab secara dinamis
-        tab_names = [item['nama_file'][:30] + "..." if len(item['nama_file']) > 30 else item['nama_file'] for item in data_items]
-        tabs = st.tabs(tab_names)
-        
-        for i, item in enumerate(data_items):
-            with tabs[i]:
-                df = item['data']
-                st.write(f"**Sumber File:** `{item['nama_file']}`")
-                st.dataframe(df, use_container_width=True)
+    data_list = []
+    for file in files:
+        path = os.path.join(opd_folder, file)
+        try:
+            # Aturan SKIPROWS Pintar berdasarkan Nama File
+            skip_rows = 0
+            if "Komposisi Instansi" in file:
+                skip_rows = 2
+            elif "Golongan Ruang" in file:
+                skip_rows = 4
+            elif "Pendidikan Formal" in file or "Tingkat Pendidikan" in file:
+                skip_rows = 1
                 
-                # Visualisasi Otomatis Sederhana
-                # Mencari kolom numerik untuk grafik
-                num_cols = df.select_dtypes(include=['number']).columns.tolist()
-                cat_cols = df.select_dtypes(include=['object']).columns.tolist()
-                
-                if len(num_cols) > 0 and len(cat_cols) > 0:
-                    fig = px.bar(df.head(20), x=cat_cols[0], y=num_cols[0], 
-                                 title=f"Visualisasi: {cat_cols[0]} vs {num_cols[0]}")
-                    st.plotly_chart(fig, use_container_width=True)
+            df = pd.read_csv(path, skiprows=skip_rows, encoding='latin-1', on_bad_lines='skip')
+            df = df.dropna(axis=1, how='all').dropna(how='all')
+            data_list.append({"nama_file": file, "data": df})
+        except Exception as e:
+            st.error(f"❌ Gagal membaca file {file}: {e}")
+            
+    return data_list
 
 # --- KONFIGURASI OPD ---
 opd_groups = {
@@ -95,11 +85,11 @@ opd_groups = {
         "Badan Pendapatan Daerah", "Badan Pengelola Perbatasan Daerah", 
         "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia"
     ],
-    "DINAS": ["Dinas Komunikasi dan Informatika", "Dinas Kesehatan", "Dinas PUPR"], # ... dst
-    "KECAMATAN": ["Kecamatan Kota Atambua", "Kecamatan Atambua Barat"] # ... dst
+    "DINAS": ["Dinas Komunikasi dan Informatika", "Dinas Kesehatan", "Dinas PUPR"],
+    "KECAMATAN": ["Kecamatan Kota Atambua", "Kecamatan Atambua Barat"]
 }
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Dibuat lebih awal agar variabel opd_select bisa digunakan) ---
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_Kabupaten_Belu.png", width=70)
 st.sidebar.title("Pusat Data Belu")
 group_select = st.sidebar.selectbox("Pilih Kelompok:", list(opd_groups.keys()))
@@ -108,47 +98,62 @@ opd_select = st.sidebar.selectbox("Pilih OPD/Dinas:", opd_groups[group_select])
 # --- HEADER ---
 st.title(f"🏢 {opd_select}")
 
-# ================== LOGIKA TAMPILAN ==================
+# ================== LOGIKA TAMPILAN (BKPSDM & OPD LAIN) ==================
 
 if opd_select == "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia":
-    st.subheader("👥 Data Kepegawaian Tahun 2020")
     
-    instansi, golongan = load_bkpsdm_data()
-
-    if instansi is not None and golongan is not None:
-        # Menghitung Total Pegawai (contoh KPI)
-        total_pegawai = 0
-        if 'Jumlah' in instansi.columns:
-            total_pegawai = pd.to_numeric(instansi['Jumlah'], errors='coerce').sum()
-
-        c1, c2 = st.columns(2)
-        c1.metric("Total Pegawai (2020)", f"{int(total_pegawai)} Orang")
-        c2.metric("Tahun Data", "2020")
-
-        st.markdown("---")
-        tab1, tab2 = st.tabs(["Komposisi per Instansi", "Berdasarkan Golongan"])
-
-        with tab1:
-            st.write("### Data Pegawai per Urusan/Instansi")
-            st.dataframe(instansi, use_container_width=True)
-            
-            # Visualisasi jika kolom yang diperlukan ada
-            if 'Urusan/Instansi' in instansi.columns and 'Jumlah' in instansi.columns:
-                df_chart = instansi.dropna(subset=['Jumlah']).head(15) # Ambil 15 teratas
-                fig = px.bar(df_chart, x='Urusan/Instansi', y='Jumlah', title="Top 15 Instansi Berdasarkan Jumlah Pegawai")
-                st.plotly_chart(fig, use_container_width=True)
-
-        with tab2:
-            st.write("### Data Pegawai per Golongan Ruang")
-            st.dataframe(golongan, use_container_width=True)
-            st.info("Catatan: Data golongan mencakup tenaga teknis dan guru.")
+    st.subheader("👥 Dashboard Kepegawaian")
+    
+    # FILTER TAHUN (2020 - 2024)
+    st.markdown('<div class="opd-card">', unsafe_allow_html=True)
+    col_filter, _ = st.columns([1, 2])
+    selected_year = col_filter.selectbox("Pilih Tahun Data:", [2020, 2021, 2022, 2023, 2024], index=0)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Load data berdasarkan folder BKPSDM dan tahun yang dipilih
+    data_items = load_data_by_year("BKPSDM", selected_year)
+    
+    if not data_items:
+        st.warning(f"⚠️ Data untuk tahun {selected_year} belum tersedia di folder BKPSDM.")
+        st.info("Pastikan file CSV memiliki angka tahun di dalam namanya (contoh: 'Data Pegawai... 2020.csv').")
     else:
-        st.warning("⚠️ File CSV Tahun 2020 untuk BKPSDM tidak ditemukan di folder 'BKPSDM'.")
+        # Menampilkan data dalam Tab secara dinamis
+        tab_names = [item['nama_file'].replace(".csv", "")[:30] + "..." if len(item['nama_file']) > 30 else item['nama_file'].replace(".csv", "") for item in data_items]
+        tabs = st.tabs(tab_names)
+        
+        for i, item in enumerate(data_items):
+            with tabs[i]:
+                df = item['data']
+                st.write(f"**Sumber File:** `{item['nama_file']}`")
+                st.dataframe(df, use_container_width=True)
+                
+                # Visualisasi Otomatis Pintar
+                num_cols = df.select_dtypes(include=['number']).columns.tolist()
+                # Hindari membuat grafik dari kolom 'No.' atau '%'
+                num_cols = [col for col in num_cols if 'no' not in col.lower() and '%' not in col.lower()]
+                cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+                
+                if len(num_cols) > 0 and len(cat_cols) > 0:
+                    col_x = cat_cols[0]
+                    col_y = num_cols[0]
+                    
+                    # Filter baris 'TOTAL' agar grafik tidak rusak
+                    df_chart = df[~df[col_x].astype(str).str.contains("TOTAL", case=False, na=False)]
+                    df_chart = df_chart.dropna(subset=[col_y]).head(20)
+                    
+                    fig = px.bar(df_chart, x=col_x, y=col_y, 
+                                 title=f"Visualisasi: {col_x} vs {col_y}",
+                                 color=col_y, color_continuous_scale="Viridis")
+                    st.plotly_chart(fig, use_container_width=True)
 
 elif opd_select == "Dinas Komunikasi dan Informatika":
     st.subheader("📡 Dashboard Kominfo")
-    # ... (Logika Kominfo tetap sama seperti sebelumnya)
     st.info("Menampilkan data sarana prasarana dan internet.")
+    
+    asn, sarpras, internet, tower, duk = load_kominfo_data()
+    if asn is not None:
+        st.success("✅ Data Kominfo berhasil dimuat! Anda dapat menambahkan grafik Kominfo di sini.")
+        # Jika Anda ingin memunculkan tabel kominfo, Anda bisa menambahkan st.dataframe(asn) dsb di sini.
 
 else:
     st.markdown('<div class="opd-card">⚠️ Data untuk instansi ini belum diunggah ke sistem.</div>', unsafe_allow_html=True)
