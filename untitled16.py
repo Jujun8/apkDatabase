@@ -154,9 +154,7 @@ opd_groups = {
 
         "Dinas Kependudukan dan Pencatatan Sipil", "Dinas Koperasi, Tenaga Kerja dan Transmigrasi",
 
-        "Dinas Pariwisata dan Kebudayaan", "DP3AP2KB", "DPMPTSP",
-
-        "Dinas Komunikasi dan Informatika",
+        "Dinas Pariwisata dan Kebudayaan", "Dinas Komunikasi dan Informatika",
 
         "Dinas Kesehatan", "Dinas PUPR", "Dinas Pertanian dan Ketahanan Pangan",
 
@@ -196,7 +194,7 @@ opd_groups = {
 
 # --- SIDEBAR ---
 
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_Kabupaten_Belu.png", width=70)
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_Kabupaten_Belu.png", width=50)
 
 st.sidebar.title("Pusat Data Belu")
 
@@ -228,9 +226,9 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
     # DEBUG (bisa dihapus nanti)
 
-    if os.path.exists("data"):
+    if os.path.exists("KOMINFO"):
 
-        st.write("📂 Isi folder data:", os.listdir("data"))
+        st.write("📂 Isi folder data:", os.listdir("KOMINFO"))
 
     else:
 
