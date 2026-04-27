@@ -54,7 +54,7 @@ def load_kominfo_data():
             except:
                 return pd.read_csv(path, encoding='latin-1')
 
-        asn = read_csv_safe("ASN-Berpendidikan-TIK.csv")
+        asn = read_csv_safe("https://github.com/Jujun8/apkDatabase/blob/1b1d838b628f90fe7ea6b5e0deecf7ce6e55c059/KOMINFO/ASN-Berpendidikan-TIK.csv")
         sarpras = read_csv_safe("Data-Sarana-dan-Prasarana-Diskominfo.csv")
         internet = read_csv_safe("Data-Internet-OPD-Beserta-Kapasitasnya-.csv")
         tower = read_csv_safe("DATA-TOWER.csv")
