@@ -63,8 +63,8 @@ def load_bkpsdm_data():
 
         # Membaca file spesifik tahun 2020 yang Anda berikan
         # skiprows disesuaikan dengan struktur file CSV yang biasanya memiliki judul di baris 1-2
-        instansi_2020 = read_bkpsdm_csv("Data Pegawai Berdasarkan Komposisi Instansi di Kabupaten Belu Tahun 2020.csv", skip=2)
-        golongan_2020 = read_bkpsdm_csv("Data Pegawai Berdasarkan Golongan Ruang di Kabupaten Belu Tahun 2020.csv", skip=1)
+        instansi_2020 = read_csv_safe("Data Pegawai Berdasarkan Komposisi Instansi di Kabupaten Belu Tahun 2020.csv", skip=2)
+        golongan_2020 = read_csv_safe("Data Pegawai Berdasarkan Golongan Ruang di Kabupaten Belu Tahun 2020.csv", skip=1)
 
         return instansi_2020, golongan_2020
     except Exception as e:
