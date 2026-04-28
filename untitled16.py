@@ -304,7 +304,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
             if len(num) > 0:
 
-                st.plotly_chart(px.bar(tower, x=tower.columns[0], y=num), use_container_width=True)
+                st.plotly_chart(px.bar(towerBantuan, x=towerBantuan.columns[0], y=num), use_container_width=True)
                 
         with tab4:
 
