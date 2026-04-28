@@ -300,7 +300,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
             st.dataframe(towerBantuan)
 
-            num = tower.select_dtypes(include='number').columns
+            num = towerBantuan.select_dtypes(include='number').columns
 
             if len(num) > 0:
 
