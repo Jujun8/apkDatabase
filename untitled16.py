@@ -90,13 +90,11 @@ def load_bkpsdm_data_by_year(year):
             except:
                 return pd.read_csv(path, encoding="latin-1")
 
-        asn = read_csv_safe("asn.csv")
-        pangkat = read_csv_safe("pangkat.csv")
-        diklat = read_csv_safe("diklat.csv")
-        mutasi = read_csv_safe("mutasi.csv")
-        pensiun = read_csv_safe("pensiun.csv")
+        pegawaiKomposisi = read_csv_safe("Data Pegawai Berdasarkan Komposisi Instansi di Kabupaten Belu Tahun 2020.csv")
+        pegawaiPangkat = read_csv_safe("Data Pegawai Berdasarkan Pangkat di Kabupaten Belu Tahun 2020.csv")
+        pegawaiHonorer = read_csv_safe("Data Pegawai Honorer Tingkat Pendidikan Formal di Kabupaten Belu Tahun 2020.csv")
 
-        return asn, pangkat, diklat, mutasi, pensiun
+        return pegawaiKomposisi, pegawaiPangkat, pegawaiHonorer
 
     except Exception as e:
         st.error(f"❌ ERROR LOAD DATA BKPSDM: {e}")
@@ -220,37 +218,32 @@ elif opd_select == "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia":
 
     st.subheader("👨‍💼 Dashboard BKPSDM")
 
-    tahun_pilih = st.selectbox("Pilih Tahun", [2021, 2022, 2023, 2024])
+    tahun_pilih = st.selectbox("Pilih Tahun", [2020, 2021, 2022, 2023, 2024])
 
     asn, pangkat, diklat, mutasi, pensiun = load_bkpsdm_data_by_year(tahun_pilih)
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total ASN", len(asn))
-    c2.metric("Kenaikan Pangkat", len(pangkat))
-    c3.metric("Peserta Diklat", len(diklat))
-    c4.metric("Mutasi", len(mutasi))
-    c5.metric("Pensiun", len(pensiun))
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Data Pegawai Berdasarkan Komposisi Instansi", len(pegawaiKomposisi))
+    c2.metric("Data Pegaawai Berdasarkan Pangkat", len(pegawaiPangkat))
+    c3.metric("Data pegawai Honorer Berdasarkan Tingkat", len(pegawaiHonorer))
+    
 
     st.markdown("---")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ["ASN", "Pangkat", "Diklat", "Mutasi", "Pensiun"]
+    tab1, tab2, tab3 = st.tabs(
+        ["Data Pegawai Berdasarkan Komposisi Instansi", "Data Pegaawai Berdasarkan Pangkat", "Data pegawai Honorer Berdasarkan Tingkat"]
     )
 
     with tab1:
-        st.dataframe(asn)
+        st.dataframe(pegawaiKomposisi)
 
     with tab2:
-        st.dataframe(pangkat)
+        st.dataframe(pegawaiPangkat)
 
     with tab3:
-        st.dataframe(diklat)
+        st.dataframe(pegawaiHonorer)
 
-    with tab4:
-        st.dataframe(mutasi)
 
-    with tab5:
-        st.dataframe(pensiun)
 
 elif opd_select == "Bagian Hukum":
     st.dataframe(get_hukum_data())
