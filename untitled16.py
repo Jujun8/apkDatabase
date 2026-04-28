@@ -120,7 +120,7 @@ def load_kominfo_data():
 
         duk = read_csv_safe("DUK-KOMINFO-Upload.csv")
 
-        towerTelekomunikasi = read_csv_safe("DATA-TOWER.csv")
+        towerTelekomunikasi = read_csv_safe("Data Tower Telekomunikasi.csv")
 
 
 
@@ -308,7 +308,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
                 
         with tab4:
 
-            st.dataframe(sarpras)
+            st.dataframe(towerTelekomunikasi)
 
 
         with tab5:
