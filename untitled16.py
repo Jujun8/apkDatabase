@@ -298,7 +298,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
         with tab3:
 
-            st.dataframe(tower)
+            st.dataframe(towerBantuan)
 
             num = tower.select_dtypes(include='number').columns
 
