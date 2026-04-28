@@ -124,7 +124,7 @@ def load_kominfo_data():
 
 
 
-        return asn, sarpras, internet, tower, duk
+        return asn, sarpras, internet, towerBantuan, duk, towerTelekomunikasi
 
 
 
@@ -238,7 +238,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
 
 
-    asn, sarpras, internet, tower, duk = load_kominfo_data()
+    asn, sarpras, internet, towerBantuan, duk, towerTelekomunikasi = load_kominfo_data()
 
 
 
