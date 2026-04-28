@@ -220,7 +220,7 @@ elif opd_select == "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia":
 
     tahun_pilih = st.selectbox("Pilih Tahun", [2020, 2021, 2022, 2023, 2024])
 
-    asn, pangkat, diklat, mutasi, pensiun = load_bkpsdm_data_by_year(tahun_pilih)
+    pegawaiKomposisi, pegawaiPangkat, pegawaiHonorer = load_bkpsdm_data_by_year(tahun_pilih)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Data Pegawai Berdasarkan Komposisi Instansi", len(pegawaiKomposisi))
