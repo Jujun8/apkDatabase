@@ -116,9 +116,11 @@ def load_kominfo_data():
 
         internet = read_csv_safe("Data-Internet-OPD-Beserta-Kapasitasnya-.csv")
 
-        tower = read_csv_safe("DATA-TOWER.csv")
+        towerBantuan = read_csv_safe("DATA-TOWER.csv")
 
         duk = read_csv_safe("DUK-KOMINFO-Upload.csv")
+
+        towerTelekomunikasi = read_csv_safe("DATA-TOWER.csv")
 
 
 
@@ -246,7 +248,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
         # KPI
 
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4, c5 = st.columns(5)
 
         c1.metric("ASN TIK", len(asn))
 
@@ -254,7 +256,9 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
         c3.metric("OPD Internet", len(internet))
 
-        c4.metric("Tower", len(tower))
+        c4.metric("Tower Bantuan Bakti", len(towerBantuan))
+
+        c5.metric("Tower Telekomunikasi", len(towerTelekomunikasi))
 
 
 
@@ -264,7 +268,7 @@ if opd_select == "Dinas Komunikasi dan Informatika":
 
         # TAB
 
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["ASN", "Internet", "Tower", "Sarpras", "DUK"])
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["ASN", "Internet", "Tower Bantuan Bakti", "Tower Telekomunikasi", "Sarpras", "DUK"])
 
 
 
@@ -301,16 +305,19 @@ if opd_select == "Dinas Komunikasi dan Informatika":
             if len(num) > 0:
 
                 st.plotly_chart(px.bar(tower, x=tower.columns[0], y=num), use_container_width=True)
-
-
-
+                
         with tab4:
 
             st.dataframe(sarpras)
 
 
-
         with tab5:
+
+            st.dataframe(sarpras)
+
+
+
+        with tab6:
 
             st.dataframe(duk)
 
