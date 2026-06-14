@@ -8,32 +8,23 @@ import sqlite3
 # =====================================
 st.set_page_config(
     page_title="Sistem Informasi Data Sektoral Belu",
-    layout="wide",
-    page_icon="🏢"
+    page_icon="🏢",
+    layout="wide"
 )
 
 # =====================================
-# CUSTOM CSS
+# CSS
 # =====================================
 st.markdown("""
 <style>
-.stApp {
-    background-color: #F8FAFC;
+.stApp{
+    background-color:#F8FAFC;
 }
 
-[data-testid="stMetric"] {
-    background-color: white;
-    padding: 20px !important;
-    border-radius: 20px !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.opd-card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-    border-left: 5px solid #6366F1;
+[data-testid="stMetric"]{
+    background:white;
+    padding:15px;
+    border-radius:15px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -45,21 +36,6 @@ conn = sqlite3.connect(
     "db_sektoral.db",
     check_same_thread=False
 )
-
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS data_sektoral (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    opd TEXT,
-    kategori TEXT,
-    nama_data TEXT,
-    nilai TEXT,
-    tahun INTEGER
-)
-""")
-
-conn.commit()
 
 # =====================================
 # DAFTAR OPD
@@ -128,145 +104,170 @@ opd_groups = {
 # =====================================
 st.sidebar.title("🏢 Pusat Data Belu")
 
-group_select = st.sidebar.selectbox(
+kelompok = st.sidebar.selectbox(
     "Pilih Kelompok",
     list(opd_groups.keys())
 )
 
-opd_select = st.sidebar.selectbox(
+opd = st.sidebar.selectbox(
     "Pilih OPD",
-    opd_groups[group_select]
+    opd_groups[kelompok]
 )
 
 # =====================================
 # HEADER
 # =====================================
-st.title(f"🏢 {opd_select}")
+st.title(f"🏢 {opd}")
 st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
 
 # =====================================
-# FORM INPUT DATA
+# NAMA TABEL SQLITE
 # =====================================
-st.subheader("➕ Tambah Data")
+table_name = (
+    opd.replace(" ", "_")
+       .replace(".", "")
+       .replace(",", "")
+       .replace("-", "_")
+)
 
-with st.form("form_input_data"):
+# =====================================
+# UPLOAD CSV
+# =====================================
+st.subheader("📤 Upload Data CSV")
 
-    kategori = st.text_input("Kategori Data")
+uploaded_file = st.file_uploader(
+    "Pilih file CSV",
+    type=["csv"]
+)
 
-    nama_data = st.text_input("Nama Data")
+if uploaded_file is not None:
 
-    nilai = st.text_input("Nilai")
+    try:
+        df_upload = pd.read_csv(uploaded_file)
 
-    tahun = st.number_input(
-        "Tahun",
-        min_value=2020,
-        max_value=2035,
-        value=2025
+    except:
+        df_upload = pd.read_csv(
+            uploaded_file,
+            encoding="latin1"
+        )
+
+    st.success("✅ File berhasil dibaca")
+
+    st.write("Preview Data")
+
+    st.dataframe(
+        df_upload.head(),
+        use_container_width=True
     )
 
-    simpan = st.form_submit_button(
-        "💾 Simpan Data"
-    )
+    if st.button("💾 Simpan ke Database"):
 
-    if simpan:
-
-        cursor.execute("""
-        INSERT INTO data_sektoral
-        (opd, kategori, nama_data, nilai, tahun)
-        VALUES (?, ?, ?, ?, ?)
-        """, (
-            opd_select,
-            kategori,
-            nama_data,
-            nilai,
-            tahun
-        ))
-
-        conn.commit()
+        df_upload.to_sql(
+            table_name,
+            conn,
+            if_exists="replace",
+            index=False
+        )
 
         st.success(
-            "✅ Data berhasil disimpan"
+            f"Data {opd} berhasil disimpan."
         )
 
 # =====================================
-# AMBIL DATA OPD
-# =====================================
-query = """
-SELECT *
-FROM data_sektoral
-WHERE opd = ?
-"""
-
-df = pd.read_sql_query(
-    query,
-    conn,
-    params=(opd_select,)
-)
-
-# =====================================
-# METRIK
+# AMBIL DATA
 # =====================================
 st.markdown("---")
+st.subheader("📋 Data Tersimpan")
 
-c1, c2, c3 = st.columns(3)
+try:
 
-c1.metric(
-    "Jumlah Data",
-    len(df)
-)
+    df = pd.read_sql(
+        f"SELECT * FROM {table_name}",
+        conn
+    )
 
-c2.metric(
-    "Jumlah Kategori",
-    df["kategori"].nunique()
-    if not df.empty else 0
-)
+    c1, c2, c3 = st.columns(3)
 
-c3.metric(
-    "Jumlah Tahun",
-    df["tahun"].nunique()
-    if not df.empty else 0
-)
+    c1.metric(
+        "Jumlah Baris",
+        len(df)
+    )
 
-# =====================================
-# TABEL DATA
-# =====================================
-st.subheader("📋 Data Sektoral")
+    c2.metric(
+        "Jumlah Kolom",
+        len(df.columns)
+    )
 
-if not df.empty:
+    c3.metric(
+        "Nama Tabel",
+        table_name
+    )
 
     st.dataframe(
         df,
         use_container_width=True
     )
 
-else:
+    # =========================
+    # GRAFIK OTOMATIS
+    # =========================
+
+    numeric_cols = df.select_dtypes(
+        include="number"
+    ).columns
+
+    if len(numeric_cols) > 0:
+
+        st.subheader("📊 Visualisasi Data")
+
+        kolom = st.selectbox(
+            "Pilih Kolom Numerik",
+            numeric_cols
+        )
+
+        fig = px.histogram(
+            df,
+            x=kolom,
+            title=f"Distribusi {kolom}"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+except:
 
     st.info(
-        "Belum ada data untuk OPD ini."
+        "Belum ada data yang tersimpan untuk OPD ini."
     )
 
 # =====================================
-# GRAFIK
+# HAPUS DATA
 # =====================================
-if not df.empty:
+st.markdown("---")
 
-    grafik = (
-        df.groupby("tahun")
-        .size()
-        .reset_index(name="Jumlah")
-    )
+if st.button("🗑️ Hapus Data OPD Ini"):
 
-    fig = px.bar(
-        grafik,
-        x="tahun",
-        y="Jumlah",
-        title=f"Jumlah Data {opd_select} per Tahun"
-    )
+    try:
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+        conn.execute(
+            f"DROP TABLE {table_name}"
+        )
+
+        conn.commit()
+
+        st.success(
+            "Data berhasil dihapus."
+        )
+
+        st.rerun()
+
+    except:
+
+        st.warning(
+            "Tidak ada data yang dapat dihapus."
+        )
 
 # =====================================
 # FOOTER
