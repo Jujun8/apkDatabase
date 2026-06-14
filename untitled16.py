@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # =====================================
-# CSS
+# CUSTOM CSS
 # =====================================
 st.markdown("""
 <style>
@@ -135,9 +135,19 @@ st.title(f"🏢 {opd_select}")
 st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
 
 # =====================================
-# UPLOAD CSV
+# UPLOAD DATASET
 # =====================================
-st.subheader("📤 Upload Data CSV")
+st.subheader("📤 Upload Dataset")
+
+nama_dataset = st.text_input(
+    "📝 Nama Dataset",
+    placeholder="Contoh : Data DUK Kominfo 2025"
+)
+
+keterangan = st.text_area(
+    "📄 Keterangan Dataset",
+    placeholder="Masukkan deskripsi dataset..."
+)
 
 uploaded_file = st.file_uploader(
     "Pilih File CSV",
@@ -154,16 +164,20 @@ if uploaded_file is not None:
             encoding="latin1"
         )
 
-    st.success("File berhasil dibaca")
+    st.success("✅ File berhasil dibaca")
 
-    st.write("Preview Data")
+    st.subheader("Preview Data")
 
     st.dataframe(
         df_upload.head(),
         use_container_width=True
     )
 
-    if st.button("💾 Simpan Data"):
+    if st.button("💾 Simpan Dataset"):
+
+        # Tambah metadata
+        df_upload["NAMA_DATASET"] = nama_dataset
+        df_upload["KETERANGAN"] = keterangan
 
         df_upload.to_sql(
             table_name,
@@ -173,7 +187,7 @@ if uploaded_file is not None:
         )
 
         st.success(
-            f"Data berhasil disimpan untuk {opd_select}"
+            f"Dataset '{nama_dataset}' berhasil disimpan."
         )
 
 # =====================================
@@ -189,64 +203,76 @@ try:
         conn
     )
 
-    col1, col2, col3 = st.columns(3)
+    if not df.empty:
 
-    col1.metric(
-        "Jumlah Baris",
-        len(df)
-    )
+        if "NAMA_DATASET" in df.columns:
+            st.info(
+                f"📁 Dataset : {df['NAMA_DATASET'].iloc[0]}"
+            )
 
-    col2.metric(
-        "Jumlah Kolom",
-        len(df.columns)
-    )
+        if "KETERANGAN" in df.columns:
+            st.write(
+                f"**Keterangan :** {df['KETERANGAN'].iloc[0]}"
+            )
 
-    col3.metric(
-        "Nama Tabel",
-        table_name
-    )
+        col1, col2, col3 = st.columns(3)
 
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
-
-    # ==========================
-    # VISUALISASI
-    # ==========================
-    numeric_cols = list(
-        df.select_dtypes(
-            include=["int64", "float64"]
-        ).columns
-    )
-
-    if len(numeric_cols) > 0:
-
-        st.subheader("📊 Grafik Data")
-
-        selected_column = st.selectbox(
-            "Pilih Kolom Numerik",
-            numeric_cols
+        col1.metric(
+            "Jumlah Baris",
+            len(df)
         )
 
-        fig = px.histogram(
+        col2.metric(
+            "Jumlah Kolom",
+            len(df.columns)
+        )
+
+        col3.metric(
+            "Nama Tabel",
+            table_name
+        )
+
+        st.dataframe(
             df,
-            x=selected_column,
-            title=f"Distribusi {selected_column}"
-        )
-
-        st.plotly_chart(
-            fig,
             use_container_width=True
         )
 
-except Exception:
+        # =====================================
+        # GRAFIK OTOMATIS
+        # =====================================
+        numeric_cols = list(
+            df.select_dtypes(
+                include=["int64", "float64"]
+            ).columns
+        )
+
+        if len(numeric_cols) > 0:
+
+            st.subheader("📊 Visualisasi Data")
+
+            selected_column = st.selectbox(
+                "Pilih Kolom Numerik",
+                numeric_cols
+            )
+
+            fig = px.histogram(
+                df,
+                x=selected_column,
+                title=f"Distribusi {selected_column}"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+except:
     st.info(
         "Belum ada data yang tersimpan untuk OPD ini."
     )
 
 # =====================================
-# HAPUS DATA OPD
+# HAPUS DATA
 # =====================================
 st.markdown("---")
 
