@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import sqlite3
 import re
+from datetime import datetime
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -32,22 +33,44 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================
-# DATABASE SQLITE
+# DATABASE
 # =====================================
 conn = sqlite3.connect(
     "db_sektoral.db",
     check_same_thread=False
 )
 
+conn.execute("""
+CREATE TABLE IF NOT EXISTS metadata_dataset(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    opd TEXT,
+    nama_dataset TEXT,
+    keterangan TEXT,
+    nama_tabel TEXT,
+    tanggal_upload TEXT
+)
+""")
+
+conn.commit()
+
 # =====================================
-# FUNGSI NAMA TABEL
+# FUNGSI
 # =====================================
-def get_table_name(opd):
-    return "opd_" + re.sub(
-        r'[^a-zA-Z0-9_]',
-        '',
-        opd.lower().replace(" ", "_")
+def create_dataset_table_name(opd, nama_dataset):
+
+    opd_clean = re.sub(
+        r'[^a-zA-Z0-9]',
+        '_',
+        opd.lower()
     )
+
+    dataset_clean = re.sub(
+        r'[^a-zA-Z0-9]',
+        '_',
+        nama_dataset.lower()
+    )
+
+    return f"{opd_clean}_{dataset_clean}"
 
 # =====================================
 # DATA OPD
@@ -126,8 +149,6 @@ opd_select = st.sidebar.selectbox(
     opd_groups[group_select]
 )
 
-table_name = get_table_name(opd_select)
-
 # =====================================
 # HEADER
 # =====================================
@@ -135,13 +156,13 @@ st.title(f"🏢 {opd_select}")
 st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
 
 # =====================================
-# UPLOAD DATASET
+# FORM UPLOAD DATASET
 # =====================================
 st.subheader("📤 Upload Dataset")
 
 nama_dataset = st.text_input(
     "📝 Nama Dataset",
-    placeholder="Contoh : Data DUK Kominfo 2025"
+    placeholder="Contoh: Data DUK Kominfo 2025"
 )
 
 keterangan = st.text_area(
@@ -150,7 +171,7 @@ keterangan = st.text_area(
 )
 
 uploaded_file = st.file_uploader(
-    "Pilih File CSV",
+    "Upload File CSV",
     type=["csv"]
 )
 
@@ -166,7 +187,7 @@ if uploaded_file is not None:
 
     st.success("✅ File berhasil dibaca")
 
-    st.subheader("Preview Data")
+    st.write("Preview Data")
 
     st.dataframe(
         df_upload.head(),
@@ -175,127 +196,171 @@ if uploaded_file is not None:
 
     if st.button("💾 Simpan Dataset"):
 
-        # Tambah metadata
-        df_upload["NAMA_DATASET"] = nama_dataset
-        df_upload["KETERANGAN"] = keterangan
+        if nama_dataset.strip() == "":
+            st.warning(
+                "Nama dataset wajib diisi"
+            )
 
-        df_upload.to_sql(
-            table_name,
-            conn,
-            if_exists="replace",
-            index=False
-        )
+        else:
 
-        st.success(
-            f"Dataset '{nama_dataset}' berhasil disimpan."
-        )
+            dataset_table = create_dataset_table_name(
+                opd_select,
+                nama_dataset
+            )
+
+            df_upload.to_sql(
+                dataset_table,
+                conn,
+                if_exists="replace",
+                index=False
+            )
+
+            conn.execute("""
+            INSERT INTO metadata_dataset(
+                opd,
+                nama_dataset,
+                keterangan,
+                nama_tabel,
+                tanggal_upload
+            )
+            VALUES(?,?,?,?,?)
+            """,
+            (
+                opd_select,
+                nama_dataset,
+                keterangan,
+                dataset_table,
+                datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+            ))
+
+            conn.commit()
+
+            st.success(
+                "✅ Dataset berhasil disimpan"
+            )
 
 # =====================================
-# TAMPILKAN DATA OPD
+# DATASET OPD
 # =====================================
 st.markdown("---")
-st.subheader("📋 Data Tersimpan")
+st.subheader("📚 Dataset Tersimpan")
 
-try:
+metadata = pd.read_sql_query(
+    """
+    SELECT *
+    FROM metadata_dataset
+    WHERE opd = ?
+    ORDER BY tanggal_upload DESC
+    """,
+    conn,
+    params=(opd_select,)
+)
+
+if len(metadata) > 0:
+
+    dataset_pilih = st.selectbox(
+        "Pilih Dataset",
+        metadata["nama_dataset"]
+    )
+
+    row = metadata[
+        metadata["nama_dataset"] == dataset_pilih
+    ].iloc[0]
+
+    st.info(
+        f"📁 Dataset : {row['nama_dataset']}"
+    )
+
+    st.write(
+        f"**Keterangan :** {row['keterangan']}"
+    )
+
+    st.write(
+        f"**Tanggal Upload :** {row['tanggal_upload']}"
+    )
 
     df = pd.read_sql(
-        f"SELECT * FROM {table_name}",
+        f"SELECT * FROM {row['nama_tabel']}",
         conn
     )
 
-    if not df.empty:
+    col1, col2 = st.columns(2)
 
-        if "NAMA_DATASET" in df.columns:
-            st.info(
-                f"📁 Dataset : {df['NAMA_DATASET'].iloc[0]}"
-            )
+    col1.metric(
+        "Jumlah Baris",
+        len(df)
+    )
 
-        if "KETERANGAN" in df.columns:
-            st.write(
-                f"**Keterangan :** {df['KETERANGAN'].iloc[0]}"
-            )
+    col2.metric(
+        "Jumlah Kolom",
+        len(df.columns)
+    )
 
-        col1, col2, col3 = st.columns(3)
+    st.dataframe(
+        df,
+        use_container_width=True
+    )
 
-        col1.metric(
-            "Jumlah Baris",
-            len(df)
+    # ==========================
+    # GRAFIK
+    # ==========================
+    numeric_cols = list(
+        df.select_dtypes(
+            include=["int64", "float64"]
+        ).columns
+    )
+
+    if len(numeric_cols) > 0:
+
+        st.subheader("📊 Visualisasi Data")
+
+        kolom = st.selectbox(
+            "Pilih Kolom Numerik",
+            numeric_cols
         )
 
-        col2.metric(
-            "Jumlah Kolom",
-            len(df.columns)
-        )
-
-        col3.metric(
-            "Nama Tabel",
-            table_name
-        )
-
-        st.dataframe(
+        fig = px.histogram(
             df,
+            x=kolom,
+            title=f"Distribusi {kolom}"
+        )
+
+        st.plotly_chart(
+            fig,
             use_container_width=True
         )
 
-        # =====================================
-        # GRAFIK OTOMATIS
-        # =====================================
-        numeric_cols = list(
-            df.select_dtypes(
-                include=["int64", "float64"]
-            ).columns
-        )
-
-        if len(numeric_cols) > 0:
-
-            st.subheader("📊 Visualisasi Data")
-
-            selected_column = st.selectbox(
-                "Pilih Kolom Numerik",
-                numeric_cols
-            )
-
-            fig = px.histogram(
-                df,
-                x=selected_column,
-                title=f"Distribusi {selected_column}"
-            )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
-
-except:
-    st.info(
-        "Belum ada data yang tersimpan untuk OPD ini."
-    )
-
-# =====================================
-# HAPUS DATA
-# =====================================
-st.markdown("---")
-
-if st.button("🗑️ Hapus Data OPD Ini"):
-
-    try:
+    # ==========================
+    # HAPUS DATASET
+    # ==========================
+    if st.button("🗑️ Hapus Dataset Ini"):
 
         conn.execute(
-            f"DROP TABLE {table_name}"
+            f"DROP TABLE {row['nama_tabel']}"
+        )
+
+        conn.execute("""
+        DELETE FROM metadata_dataset
+        WHERE id = ?
+        """,
+        (int(row["id"]),)
         )
 
         conn.commit()
 
         st.success(
-            "Data berhasil dihapus."
+            "Dataset berhasil dihapus"
         )
 
         st.rerun()
 
-    except:
-        st.warning(
-            "Tidak ada data untuk dihapus."
-        )
+else:
+
+    st.info(
+        "Belum ada dataset untuk OPD ini."
+    )
 
 # =====================================
 # FOOTER
