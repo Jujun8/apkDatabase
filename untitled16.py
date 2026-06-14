@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import sqlite3
+import re
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -25,6 +26,7 @@ st.markdown("""
     background:white;
     padding:15px;
     border-radius:15px;
+    box-shadow:0px 2px 8px rgba(0,0,0,0.1);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -38,7 +40,17 @@ conn = sqlite3.connect(
 )
 
 # =====================================
-# DAFTAR OPD
+# FUNGSI NAMA TABEL
+# =====================================
+def get_table_name(opd):
+    return "opd_" + re.sub(
+        r'[^a-zA-Z0-9_]',
+        '',
+        opd.lower().replace(" ", "_")
+    )
+
+# =====================================
+# DATA OPD
 # =====================================
 opd_groups = {
 
@@ -104,31 +116,23 @@ opd_groups = {
 # =====================================
 st.sidebar.title("🏢 Pusat Data Belu")
 
-kelompok = st.sidebar.selectbox(
+group_select = st.sidebar.selectbox(
     "Pilih Kelompok",
     list(opd_groups.keys())
 )
 
-opd = st.sidebar.selectbox(
+opd_select = st.sidebar.selectbox(
     "Pilih OPD",
-    opd_groups[kelompok]
+    opd_groups[group_select]
 )
+
+table_name = get_table_name(opd_select)
 
 # =====================================
 # HEADER
 # =====================================
-st.title(f"🏢 {opd}")
+st.title(f"🏢 {opd_select}")
 st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
-
-# =====================================
-# NAMA TABEL SQLITE
-# =====================================
-table_name = (
-    opd.replace(" ", "_")
-       .replace(".", "")
-       .replace(",", "")
-       .replace("-", "_")
-)
 
 # =====================================
 # UPLOAD CSV
@@ -136,7 +140,7 @@ table_name = (
 st.subheader("📤 Upload Data CSV")
 
 uploaded_file = st.file_uploader(
-    "Pilih file CSV",
+    "Pilih File CSV",
     type=["csv"]
 )
 
@@ -144,14 +148,13 @@ if uploaded_file is not None:
 
     try:
         df_upload = pd.read_csv(uploaded_file)
-
     except:
         df_upload = pd.read_csv(
             uploaded_file,
             encoding="latin1"
         )
 
-    st.success("✅ File berhasil dibaca")
+    st.success("File berhasil dibaca")
 
     st.write("Preview Data")
 
@@ -160,7 +163,7 @@ if uploaded_file is not None:
         use_container_width=True
     )
 
-    if st.button("💾 Simpan ke Database"):
+    if st.button("💾 Simpan Data"):
 
         df_upload.to_sql(
             table_name,
@@ -170,11 +173,11 @@ if uploaded_file is not None:
         )
 
         st.success(
-            f"Data {opd} berhasil disimpan."
+            f"Data berhasil disimpan untuk {opd_select}"
         )
 
 # =====================================
-# AMBIL DATA
+# TAMPILKAN DATA OPD
 # =====================================
 st.markdown("---")
 st.subheader("📋 Data Tersimpan")
@@ -186,19 +189,19 @@ try:
         conn
     )
 
-    c1, c2, c3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-    c1.metric(
+    col1.metric(
         "Jumlah Baris",
         len(df)
     )
 
-    c2.metric(
+    col2.metric(
         "Jumlah Kolom",
         len(df.columns)
     )
 
-    c3.metric(
+    col3.metric(
         "Nama Tabel",
         table_name
     )
@@ -208,27 +211,28 @@ try:
         use_container_width=True
     )
 
-    # =========================
-    # GRAFIK OTOMATIS
-    # =========================
-
-    numeric_cols = df.select_dtypes(
-        include="number"
-    ).columns
+    # ==========================
+    # VISUALISASI
+    # ==========================
+    numeric_cols = list(
+        df.select_dtypes(
+            include=["int64", "float64"]
+        ).columns
+    )
 
     if len(numeric_cols) > 0:
 
-        st.subheader("📊 Visualisasi Data")
+        st.subheader("📊 Grafik Data")
 
-        kolom = st.selectbox(
+        selected_column = st.selectbox(
             "Pilih Kolom Numerik",
             numeric_cols
         )
 
         fig = px.histogram(
             df,
-            x=kolom,
-            title=f"Distribusi {kolom}"
+            x=selected_column,
+            title=f"Distribusi {selected_column}"
         )
 
         st.plotly_chart(
@@ -236,14 +240,13 @@ try:
             use_container_width=True
         )
 
-except:
-
+except Exception:
     st.info(
         "Belum ada data yang tersimpan untuk OPD ini."
     )
 
 # =====================================
-# HAPUS DATA
+# HAPUS DATA OPD
 # =====================================
 st.markdown("---")
 
@@ -264,9 +267,8 @@ if st.button("🗑️ Hapus Data OPD Ini"):
         st.rerun()
 
     except:
-
         st.warning(
-            "Tidak ada data yang dapat dihapus."
+            "Tidak ada data untuk dihapus."
         )
 
 # =====================================
