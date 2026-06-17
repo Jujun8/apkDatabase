@@ -82,7 +82,7 @@ opd_groups = {
         "Inspektorat Daerah",
         "Badan Kesatuan Bangsa dan Politik",
         "Badan Pengelola Keuangan dan Aset Daerah",
-        "Bappelitbangda",
+        "BP4D",
         "BPBD",
         "Badan Pendapatan Daerah",
         "Badan Pengelola Perbatasan Daerah",
