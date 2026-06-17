@@ -158,6 +158,9 @@ st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
 # =====================================
 # FORM UPLOAD DATASET
 # =====================================
+# =====================================
+# FORM UPLOAD DATASET
+# =====================================
 st.subheader("📤 Upload Dataset")
 
 nama_dataset = st.text_input(
@@ -178,25 +181,75 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
 
     try:
+        # UTF-8
         df_upload = pd.read_csv(uploaded_file)
+
     except:
-        df_upload = pd.read_csv(
-            uploaded_file,
-            encoding="latin1"
-        )
+
+        uploaded_file.seek(0)
+
+        try:
+            # UTF-8 BOM
+            df_upload = pd.read_csv(
+                uploaded_file,
+                encoding="utf-8-sig"
+            )
+
+        except:
+
+            uploaded_file.seek(0)
+
+            # Excel Indonesia
+            df_upload = pd.read_csv(
+                uploaded_file,
+                encoding="cp1252"
+            )
+
+    # =====================================
+    # BERSIHKAN DATA
+    # =====================================
+
+    # Hapus kolom kosong (Unnamed)
+    df_upload = df_upload.loc[
+        :,
+        ~df_upload.columns.astype(str).str.contains("^Unnamed")
+    ]
+
+    # Ganti NaN menjadi kosong
+    df_upload = df_upload.fillna("")
+
+    # Hapus baris yang benar-benar kosong
+    df_upload = df_upload[
+        ~(df_upload.astype(str)
+            .apply(lambda x: x.str.strip())
+            .eq("")
+            .all(axis=1))
+    ]
+
+    # Rapikan index
+    df_upload.reset_index(
+        drop=True,
+        inplace=True
+    )
 
     st.success("✅ File berhasil dibaca")
 
     st.write("Preview Data")
 
     st.dataframe(
-        df_upload.head(),
+        df_upload.head(20),
         use_container_width=True
+    )
+
+    st.info(
+        f"📊 {len(df_upload)} baris | "
+        f"{len(df_upload.columns)} kolom"
     )
 
     if st.button("💾 Simpan Dataset"):
 
         if nama_dataset.strip() == "":
+
             st.warning(
                 "Nama dataset wajib diisi"
             )
@@ -241,6 +294,8 @@ if uploaded_file is not None:
                 "✅ Dataset berhasil disimpan"
             )
 
+            st.rerun()
+
 # =====================================
 # DATASET OPD
 # =====================================
@@ -282,9 +337,11 @@ if len(metadata) > 0:
     )
 
     df = pd.read_sql(
-        f"SELECT * FROM {row['nama_tabel']}",
-        conn
+    f"SELECT * FROM {row['nama_tabel']}",
+    conn
     )
+
+    df = df.fillna("")
 
     col1, col2 = st.columns(2)
 
