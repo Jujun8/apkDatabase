@@ -103,7 +103,8 @@ opd_groups = {
         "Dinas Perindustrian dan Perdagangan",
         "Dinas Perpustakaan dan Kearsipan",
         "Dinas Sosial, PMD",
-        "Satuan Polisi Pamong Praja"
+        "Satuan Polisi Pamong Praja",
+        "Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pegendalian Penduduk dan Keluarga Berencana"
     ],
 
     "BAGIAN SETDA & RSUD": [
