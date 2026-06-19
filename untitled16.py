@@ -1,9 +1,88 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import sqlite3
+import gspread
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+import io
 import re
 from datetime import datetime
+
+# =====================================
+# GOOGLE SHEETS & DRIVE
+# =====================================
+
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=SCOPES
+)
+
+gc = gspread.authorize(creds)
+
+sheet = gc.open_by_key(
+    "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+)
+st.success("✅ Google Sheets terkoneksi")
+
+drive_service = build(
+    "drive",
+    "v3",
+    credentials=creds
+)
+
+FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
+
+def get_metadata_sheet():
+
+    try:
+        return sheet.worksheet("metadata")
+
+    except:
+        ws = sheet.add_worksheet(
+            title="metadata",
+            rows=1000,
+            cols=20
+        )
+
+        ws.append_row([
+            "id",
+            "opd",
+            "nama_dataset",
+            "keterangan",
+            "file_id",
+            "tanggal_upload"
+        ])
+
+        return ws
+
+
+def upload_csv_to_drive(uploaded_file, filename):
+
+    file_bytes = uploaded_file.getvalue()
+
+    media = MediaIoBaseUpload(
+        io.BytesIO(file_bytes),
+        mimetype="text/csv"
+    )
+
+    metadata = {
+        "name": filename,
+        "parents": [FOLDER_ID]
+    }
+
+    file = drive_service.files().create(
+        body=metadata,
+        media_body=media,
+        fields="id"
+    ).execute()
+
+    return file["id"]
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -32,82 +111,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =====================================
-# DATABASE
-# =====================================
-conn = sqlite3.connect(
-    "db_sektoral.db",
-    check_same_thread=False
-)
-# CEK LOKASI DATABASE
-import os
-
-st.write("📂 Lokasi Database:")
-st.code(os.path.abspath("db_sektoral.db"))
-
-st.write("📂 Folder Kerja:")
-st.code(os.getcwd())
-
-if os.path.exists("db_sektoral.db"):
-    st.success("✅ Database ditemukan")
-    st.write(
-        "Ukuran Database:",
-        os.path.getsize("db_sektoral.db"),
-        "bytes"
-    )
-else:
-    st.error("❌ Database tidak ditemukan")
-
-conn.execute("""
-CREATE TABLE IF NOT EXISTS metadata_dataset(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    opd TEXT,
-    nama_dataset TEXT,
-    keterangan TEXT,
-    nama_tabel TEXT,
-    tanggal_upload TEXT
-)
-""")
-
-conn.commit()
-
-st.subheader("🔍 Isi Metadata")
-
-cek = pd.read_sql_query(
-    "SELECT * FROM metadata_dataset",
-    conn
-)
-
-st.write("Jumlah data:", len(cek))
-st.dataframe(cek)
-
-tables = pd.read_sql_query("""
-SELECT name
-FROM sqlite_master
-WHERE type='table'
-""", conn)
-
-st.subheader("📋 Tabel Database")
-st.dataframe(tables)
-
-# =====================================
-# FUNGSI
-# =====================================
-def create_dataset_table_name(opd, nama_dataset):
-
-    opd_clean = re.sub(
-        r'[^a-zA-Z0-9]',
-        '_',
-        opd.lower()
-    )
-
-    dataset_clean = re.sub(
-        r'[^a-zA-Z0-9]',
-        '_',
-        nama_dataset.lower()
-    )
-
-    return f"{opd_clean}_{dataset_clean}"
 
 # =====================================
 # DATA OPD
@@ -295,44 +298,33 @@ if uploaded_file is not None:
         else:
 
             dataset_table = create_dataset_table_name(
-                opd_select,
-                nama_dataset
-            )
+        opd_select,
+        nama_dataset
+    )
 
-            df_upload.to_sql(
-                dataset_table,
-                conn,
-                if_exists="replace",
-                index=False
-            )
+    file_id = upload_csv_to_drive(
+        uploaded_file,
+        f"{dataset_table}.csv"
+    )
 
-            conn.execute("""
-            INSERT INTO metadata_dataset(
-                opd,
-                nama_dataset,
-                keterangan,
-                nama_tabel,
-                tanggal_upload
-            )
-            VALUES(?,?,?,?,?)
-            """,
-            (
-                opd_select,
-                nama_dataset,
-                keterangan,
-                dataset_table,
-                datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-            ))
+    metadata_sheet = get_metadata_sheet()
 
-            conn.commit()
+    metadata_sheet.append_row([
+        str(datetime.now().timestamp()),
+        opd_select,
+        nama_dataset,
+        keterangan,
+        file_id,
+        datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    ])
 
-            st.success(
-                "✅ Dataset berhasil disimpan"
-            )
+    st.success(
+        "✅ Dataset berhasil disimpan ke Google Drive"
+    )
 
-            st.rerun()
+    st.rerun()
 
 # =====================================
 # DATASET OPD
@@ -340,116 +332,46 @@ if uploaded_file is not None:
 st.markdown("---")
 st.subheader("📚 Dataset Tersimpan")
 
-metadata = pd.read_sql_query(
-    """
-    SELECT *
-    FROM metadata_dataset
-    WHERE opd = ?
-    ORDER BY tanggal_upload DESC
-    """,
-    conn,
-    params=(opd_select,)
-)
+metadata_sheet = get_metadata_sheet()
+
+data_meta = metadata_sheet.get_all_records()
+
+metadata = pd.DataFrame(data_meta)
 
 if len(metadata) > 0:
 
-    dataset_pilih = st.selectbox(
-        "Pilih Dataset",
-        metadata["nama_dataset"]
-    )
+    metadata = metadata[
+        metadata["opd"] == opd_select
+    ]
 
-    row = metadata[
-        metadata["nama_dataset"] == dataset_pilih
-    ].iloc[0]
+    if len(metadata) > 0:
 
-    st.info(
-        f"📁 Dataset : {row['nama_dataset']}"
-    )
-
-    st.write(
-        f"**Keterangan :** {row['keterangan']}"
-    )
-
-    st.write(
-        f"**Tanggal Upload :** {row['tanggal_upload']}"
-    )
-
-    df = pd.read_sql(
-    f"SELECT * FROM {row['nama_tabel']}",
-    conn
-    )
-
-    df = df.fillna("")
-
-    col1, col2 = st.columns(2)
-
-    col1.metric(
-        "Jumlah Baris",
-        len(df)
-    )
-
-    col2.metric(
-        "Jumlah Kolom",
-        len(df.columns)
-    )
-
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
-
-    # ==========================
-    # GRAFIK
-    # ==========================
-    numeric_cols = list(
-        df.select_dtypes(
-            include=["int64", "float64"]
-        ).columns
-    )
-
-    if len(numeric_cols) > 0:
-
-        st.subheader("📊 Visualisasi Data")
-
-        kolom = st.selectbox(
-            "Pilih Kolom Numerik",
-            numeric_cols
+        dataset_pilih = st.selectbox(
+            "Pilih Dataset",
+            metadata["nama_dataset"]
         )
 
-        fig = px.histogram(
-            df,
-            x=kolom,
-            title=f"Distribusi {kolom}"
+        row = metadata[
+            metadata["nama_dataset"] == dataset_pilih
+        ].iloc[0]
+
+        st.info(
+            f"📁 Dataset : {row['nama_dataset']}"
         )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
+        st.write(
+            f"**Keterangan :** {row['keterangan']}"
         )
 
-    # ==========================
-    # HAPUS DATASET
-    # ==========================
-    if st.button("🗑️ Hapus Dataset Ini"):
-
-        conn.execute(
-            f"DROP TABLE {row['nama_tabel']}"
+        st.write(
+            f"**Tanggal Upload :** {row['tanggal_upload']}"
         )
 
-        conn.execute("""
-        DELETE FROM metadata_dataset
-        WHERE id = ?
-        """,
-        (int(row["id"]),)
+    else:
+
+        st.info(
+            "Belum ada dataset untuk OPD ini."
         )
-
-        conn.commit()
-
-        st.success(
-            "Dataset berhasil dihapus"
-        )
-
-        st.rerun()
 
 else:
 
