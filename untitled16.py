@@ -27,6 +27,18 @@ gc = gspread.authorize(creds)
 
 try:
 
+    spreadsheet = gc.open_by_key(
+        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+    )
+
+    st.success("✅ Spreadsheet berhasil dibuka")
+
+except Exception as e:
+
+    st.error(f"Gagal membuka spreadsheet: {e}")
+
+try:
+
     sheet = gc.open_by_key(
         "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
     )
@@ -47,11 +59,18 @@ FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
 
 def get_metadata_sheet():
 
-    try:
-        return sheet.worksheet("metadata")
+    spreadsheet = gc.open_by_key(
+        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+    )
 
-    except:
-        ws = sheet.add_worksheet(
+    try:
+        return spreadsheet.worksheet("metadata")
+
+    except Exception as e:
+
+        st.warning(f"Membuat sheet metadata: {e}")
+
+        ws = spreadsheet.add_worksheet(
             title="metadata",
             rows=1000,
             cols=20
