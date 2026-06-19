@@ -44,6 +44,14 @@ except Exception as e:
 
 st.write("SERVICE ACCOUNT:")
 st.code(st.secrets["gcp_service_account"]["client_email"])
+from googleapiclient.discovery import build
+
+drive_service = build(
+    "drive",
+    "v3",
+    credentials=creds
+)
+
 try:
 
     spreadsheet = gc.open_by_key(
