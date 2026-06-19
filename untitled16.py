@@ -18,9 +18,12 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-gc = gspread.authorize(creds)
+creds = Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=SCOPES
+)
 
-from googleapiclient.discovery import build
+gc = gspread.authorize(creds)
 
 drive_service = build(
     "drive",
