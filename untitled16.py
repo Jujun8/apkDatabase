@@ -293,7 +293,7 @@ if uploaded_file is not None:
         f"{len(df_upload.columns)} kolom"
     )
 
-    if st.button("💾 Simpan Dataset"):
+if st.button("💾 Simpan Dataset"):
 
     if nama_dataset.strip() == "":
 
