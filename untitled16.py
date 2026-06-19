@@ -42,10 +42,19 @@ except Exception as e:
     st.error(f"Gagal membuka spreadsheet: {e}")
 
 try:
+    files = drive_service.files().list(
+        pageSize=5,
+        fields="files(id,name)"
+    ).execute()
 
-    sheet = gc.open_by_key(
-        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-    )
+    st.success("✅ Drive API berhasil")
+
+    st.write(files)
+
+except Exception as e:
+    st.exception(e)
+
+    
 
     st.success("✅ Spreadsheet berhasil dibuka")
 
