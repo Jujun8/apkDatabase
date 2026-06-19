@@ -295,23 +295,42 @@ if uploaded_file is not None:
 
     if st.button("💾 Simpan Dataset"):
 
-        if nama_dataset.strip() == "":
+    if nama_dataset.strip() == "":
 
-            st.warning(
-                "Nama dataset wajib diisi"
+        st.warning(
+            "Nama dataset wajib diisi"
+        )
+
+    else:
+
+        dataset_table = create_dataset_table_name(
+            opd_select,
+            nama_dataset
+        )
+
+        file_id = upload_csv_to_drive(
+            uploaded_file,
+            f"{dataset_table}.csv"
+        )
+
+        metadata_sheet = get_metadata_sheet()
+
+        metadata_sheet.append_row([
+            str(datetime.now().timestamp()),
+            opd_select,
+            nama_dataset,
+            keterangan,
+            file_id,
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
             )
+        ])
 
-        else:
+        st.success(
+            "✅ Dataset berhasil disimpan"
+        )
 
-            dataset_table = create_dataset_table_name(
-        opd_select,
-        nama_dataset
-    )
-
-    file_id = upload_csv_to_drive(
-        uploaded_file,
-        f"{dataset_table}.csv"
-    )
+        st.rerun()
 
     metadata_sheet = get_metadata_sheet()
 
