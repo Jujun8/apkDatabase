@@ -22,6 +22,10 @@ creds = Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
     scopes=SCOPES
 )
+st.write("Email Service Account:")
+st.code(
+    st.secrets["gcp_service_account"]["client_email"]
+)
 
 gc = gspread.authorize(creds)
 
@@ -47,12 +51,10 @@ try:
 
 except Exception as e:
 
-    st.error(str(e))
+    import traceback
 
-drive_service = build(
-    "drive",
-    "v3",
-    credentials=creds
+    st.error(type(e).__name__)
+    st.code(traceback.format_exc())
 )
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
