@@ -13,6 +13,10 @@ from datetime import datetime
 # GOOGLE SHEETS & DRIVE
 # =====================================
 
+# =====================================
+# GOOGLE SHEETS & DRIVE
+# =====================================
+
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -31,50 +35,20 @@ drive_service = build(
     credentials=creds
 )
 
-st.write("PROJECT ID:")
-st.code(
-    st.secrets["gcp_service_account"]["project_id"]
-)
-
-st.write("SERVICE ACCOUNT:")
-st.code(
-    st.secrets["gcp_service_account"]["client_email"]
-)
-
-
-st.write("Email Service Account:")
-st.code(
-    st.secrets["gcp_service_account"]["client_email"]
-)
-
-gc = gspread.authorize(creds)
-from googleapiclient.discovery import build
-
-drive_service = build(
-    "drive",
-    "v3",
-    credentials=creds
-)
-
-spreadsheet = gc.open_by_key(
-    "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-)
-
+SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
 
 def get_metadata_sheet():
 
     spreadsheet = gc.open_by_key(
-        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+        SPREADSHEET_ID
     )
 
     try:
         return spreadsheet.worksheet("metadata")
 
-    except Exception as e:
-
-        st.warning(f"Membuat sheet metadata: {e}")
+    except:
 
         ws = spreadsheet.add_worksheet(
             title="metadata",
