@@ -56,10 +56,9 @@ drive_service = build(
     credentials=creds
 )
 
-
-    spreadsheet = gc.open_by_key(
-        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-
+spreadsheet = gc.open_by_key(
+    "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+)
 
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
