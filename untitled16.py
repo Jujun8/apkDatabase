@@ -71,6 +71,25 @@ CREATE TABLE IF NOT EXISTS metadata_dataset(
 
 conn.commit()
 
+st.subheader("🔍 Isi Metadata")
+
+cek = pd.read_sql_query(
+    "SELECT * FROM metadata_dataset",
+    conn
+)
+
+st.write("Jumlah data:", len(cek))
+st.dataframe(cek)
+
+tables = pd.read_sql_query("""
+SELECT name
+FROM sqlite_master
+WHERE type='table'
+""", conn)
+
+st.subheader("📋 Tabel Database")
+st.dataframe(tables)
+
 # =====================================
 # FUNGSI
 # =====================================
