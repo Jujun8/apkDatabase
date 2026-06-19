@@ -18,10 +18,37 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=SCOPES
+gc = gspread.authorize(creds)
+
+from googleapiclient.discovery import build
+
+drive_service = build(
+    "drive",
+    "v3",
+    credentials=creds
 )
+
+st.write("PROJECT ID:")
+st.code(
+    st.secrets["gcp_service_account"]["project_id"]
+)
+
+st.write("SERVICE ACCOUNT:")
+st.code(
+    st.secrets["gcp_service_account"]["client_email"]
+)
+
+try:
+
+    spreadsheet = gc.open_by_key(
+        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+    )
+
+    st.success("✅ Spreadsheet berhasil dibuka")
+
+except Exception as e:
+
+    st.exception(e)
 st.write("Email Service Account:")
 st.code(
     st.secrets["gcp_service_account"]["client_email"]
@@ -37,20 +64,6 @@ drive_service = build(
 )
 
 
-
-except Exception as e:
-
-    st.exception(e)
-
-st.write("SERVICE ACCOUNT:")
-st.code(st.secrets["gcp_service_account"]["client_email"])
-from googleapiclient.discovery import build
-
-drive_service = build(
-    "drive",
-    "v3",
-    credentials=creds
-)
 
 try:
 
