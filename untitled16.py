@@ -36,9 +36,11 @@ drive_service = build(
     credentials=creds
 )
 
-# DEBUG
-st.write("PROJECT ID:")
-st.code(st.secrets["gcp_service_account"]["project_id"])
+
+
+except Exception as e:
+
+    st.exception(e)
 
 st.write("SERVICE ACCOUNT:")
 st.code(st.secrets["gcp_service_account"]["client_email"])
