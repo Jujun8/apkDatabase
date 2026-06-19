@@ -41,17 +41,7 @@ st.code(
     st.secrets["gcp_service_account"]["client_email"]
 )
 
-try:
 
-    spreadsheet = gc.open_by_key(
-        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-    )
-
-    st.success("✅ Spreadsheet berhasil dibuka")
-
-except Exception as e:
-
-    st.exception(e)
 st.write("Email Service Account:")
 st.code(
     st.secrets["gcp_service_account"]["client_email"]
@@ -67,57 +57,9 @@ drive_service = build(
 )
 
 
-
-try:
-
     spreadsheet = gc.open_by_key(
         "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-    )
 
-    st.success("✅ Spreadsheet berhasil dibuka")
-
-except Exception as e:
-
-    import traceback
-
-    st.error(type(e).__name__)
-    st.code(traceback.format_exc())
-
-try:
-
-    spreadsheet = gc.open_by_key(
-        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-    )
-
-    st.success("✅ Spreadsheet berhasil dibuka")
-
-except Exception as e:
-
-    st.error(f"Gagal membuka spreadsheet: {e}")
-
-try:
-    files = drive_service.files().list(
-        pageSize=5,
-        fields="files(id,name)"
-    ).execute()
-
-    st.success("✅ Drive API berhasil")
-
-    st.write(files)
-
-except Exception as e:
-    st.exception(e)
-
-    
-
-    st.success("✅ Spreadsheet berhasil dibuka")
-
-except Exception as e:
-
-    import traceback
-
-    st.error(type(e).__name__)
-    st.code(traceback.format_exc())
 
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
