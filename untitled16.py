@@ -55,7 +55,7 @@ except Exception as e:
 
     st.error(type(e).__name__)
     st.code(traceback.format_exc())
-)
+
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
 
