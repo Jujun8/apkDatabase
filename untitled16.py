@@ -25,10 +25,17 @@ creds = Credentials.from_service_account_info(
 
 gc = gspread.authorize(creds)
 
-sheet = gc.open_by_key(
-    "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-)
-st.success("✅ Google Sheets terkoneksi")
+try:
+
+    sheet = gc.open_by_key(
+        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+    )
+
+    st.success("✅ Spreadsheet berhasil dibuka")
+
+except Exception as e:
+
+    st.error(str(e))
 
 drive_service = build(
     "drive",
