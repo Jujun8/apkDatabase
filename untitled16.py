@@ -86,25 +86,34 @@ def get_metadata_sheet():
 
 def upload_csv_to_drive(uploaded_file, filename):
 
-    file_bytes = uploaded_file.getvalue()
+    try:
 
-    media = MediaIoBaseUpload(
-        io.BytesIO(file_bytes),
-        mimetype="text/csv"
-    )
+        file_bytes = uploaded_file.getvalue()
 
-    metadata = {
-        "name": filename,
-        "parents": [FOLDER_ID]
-    }
+        media = MediaIoBaseUpload(
+            io.BytesIO(file_bytes),
+            mimetype="text/csv",
+            resumable=True
+        )
 
-    file = drive_service.files().create(
-        body=metadata,
-        media_body=media,
-        fields="id"
-    ).execute()
+        file_metadata = {
+            "name": filename,
+            "parents": [FOLDER_ID]
+        }
 
-    return file["id"]
+        uploaded = drive_service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields="id"
+        ).execute()
+
+        return uploaded["id"]
+
+    except Exception as e:
+
+        st.error("UPLOAD ERROR")
+        st.exception(e)
+        return None
 
 # =====================================
 # KONFIGURASI HALAMAN
