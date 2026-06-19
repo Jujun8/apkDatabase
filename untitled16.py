@@ -39,6 +39,22 @@ SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
 
 FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
 
+def create_dataset_table_name(opd, nama_dataset):
+
+    opd_clean = re.sub(
+        r'[^a-zA-Z0-9]',
+        '_',
+        opd.lower()
+    )
+
+    dataset_clean = re.sub(
+        r'[^a-zA-Z0-9]',
+        '_',
+        nama_dataset.lower()
+    )
+
+    return f"{opd_clean}_{dataset_clean}"
+
 def get_metadata_sheet():
 
     spreadsheet = gc.open_by_key(
