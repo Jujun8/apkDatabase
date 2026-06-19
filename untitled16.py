@@ -28,6 +28,13 @@ st.code(
 )
 
 gc = gspread.authorize(creds)
+from googleapiclient.discovery import build
+
+drive_service = build(
+    "drive",
+    "v3",
+    credentials=creds
+)
 
 # DEBUG
 st.write("PROJECT ID:")
