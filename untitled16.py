@@ -39,6 +39,24 @@ conn = sqlite3.connect(
     "db_sektoral.db",
     check_same_thread=False
 )
+# CEK LOKASI DATABASE
+import os
+
+st.write("📂 Lokasi Database:")
+st.code(os.path.abspath("db_sektoral.db"))
+
+st.write("📂 Folder Kerja:")
+st.code(os.getcwd())
+
+if os.path.exists("db_sektoral.db"):
+    st.success("✅ Database ditemukan")
+    st.write(
+        "Ukuran Database:",
+        os.path.getsize("db_sektoral.db"),
+        "bytes"
+    )
+else:
+    st.error("❌ Database tidak ditemukan")
 
 conn.execute("""
 CREATE TABLE IF NOT EXISTS metadata_dataset(
