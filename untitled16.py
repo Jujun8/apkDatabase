@@ -29,6 +29,27 @@ st.code(
 
 gc = gspread.authorize(creds)
 
+# DEBUG
+st.write("PROJECT ID:")
+st.code(st.secrets["gcp_service_account"]["project_id"])
+
+st.write("SERVICE ACCOUNT:")
+st.code(st.secrets["gcp_service_account"]["client_email"])
+try:
+
+    spreadsheet = gc.open_by_key(
+        "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+    )
+
+    st.success("✅ Spreadsheet berhasil dibuka")
+
+except Exception as e:
+
+    import traceback
+
+    st.error(type(e).__name__)
+    st.code(traceback.format_exc())
+
 try:
 
     spreadsheet = gc.open_by_key(
