@@ -332,25 +332,6 @@ if uploaded_file is not None:
 
         st.rerun()
 
-    metadata_sheet = get_metadata_sheet()
-
-    metadata_sheet.append_row([
-        str(datetime.now().timestamp()),
-        opd_select,
-        nama_dataset,
-        keterangan,
-        file_id,
-        datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-    ])
-
-    st.success(
-        "✅ Dataset berhasil disimpan ke Google Drive"
-    )
-
-    st.rerun()
-
 # =====================================
 # DATASET OPD
 # =====================================
