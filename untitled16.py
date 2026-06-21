@@ -466,20 +466,22 @@ except Exception as e:
 
 st.markdown("---")
 
-  # ==========================
+# ==========================
 # HAPUS DATASET
 # ==========================
 
-if st.button(
-    "🗑 Hapus Dataset",
-    type="primary"
-):
+if st.button("🗑 Hapus Dataset", type="primary"):
 
     try:
+        # hapus sheet dataset
         delete_dataset(row["sheet_name"])
 
-        cell = metadata_sheet.find(row["id"])
-        metadata_sheet.delete_rows(cell.row)
+        # ambil metadata sheet (yang benar)
+        sheet = get_metadata_sheet()
+
+        # hapus baris metadata berdasarkan ID
+        cell = sheet.find(row["id"])
+        sheet.delete_rows(cell.row)
 
         st.cache_data.clear()
 
@@ -488,6 +490,7 @@ if st.button(
 
     except Exception as e:
         st.error(f"Gagal menghapus dataset: {e}")
+
 
 
 # =====================================
