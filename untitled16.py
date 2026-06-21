@@ -8,9 +8,10 @@ from googleapiclient.http import MediaIoBaseUpload
 import io
 import re
 from datetime import datetime
-from googleapiclient.http 
-import MediaIoBaseDownload
-
+from googleapiclient.http import (
+    MediaIoBaseUpload,
+    MediaIoBaseDownload
+)
 # =====================================
 # GOOGLE SHEETS & DRIVE
 # =====================================
