@@ -121,11 +121,10 @@ def upload_csv_to_drive(uploaded_file, filename):
 
         return uploaded["id"]
 
-    except Exception as e:
+   except Exception as e:
 
         st.error("UPLOAD ERROR")
-        st.exception(e)
-
+        st.write(str(e))
         return None
 
 def read_csv_from_drive(file_id):
