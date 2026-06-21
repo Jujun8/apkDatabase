@@ -19,12 +19,20 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=SCOPES
-)
+@st.cache_resource
+def get_gspread_client():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=SCOPES
+    )
+    return gspread.authorize(creds)
 
-gc = gspread.authorize(creds)
+gc = get_gspread_client()
+@st.cache_resource
+def get_spreadsheet():
+    return gc.open_by_key(SPREADSHEET_ID)
+
+spreadsheet = get_spreadsheet()
 
 
 SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
@@ -48,16 +56,9 @@ def create_dataset_table_name(opd, nama_dataset):
     return f"{opd_clean}_{dataset_clean}"
 
 def get_metadata_sheet():
-
-    spreadsheet = gc.open_by_key(
-        SPREADSHEET_ID
-    )
-
     try:
         return spreadsheet.worksheet("metadata")
-
     except:
-
         ws = spreadsheet.add_worksheet(
             title="metadata",
             rows=1000,
@@ -72,7 +73,6 @@ def get_metadata_sheet():
             "sheet_name",
             "tanggal_upload"
         ])
-
         return ws
 
 def save_dataset_to_sheet(df, sheet_name):
@@ -101,30 +101,19 @@ def save_dataset_to_sheet(df, sheet_name):
     return True
 
 
+@st.cache_data(ttl=60)
 def read_dataset_from_sheet(sheet_name):
+    try:
+        ws = spreadsheet.worksheet(sheet_name)
+        data = ws.get_all_values()
 
-    spreadsheet = gc.open_by_key(
-        SPREADSHEET_ID
-    )
+        if len(data) == 0:
+            return pd.DataFrame()
 
-    ws = spreadsheet.worksheet(
-        sheet_name
-    )
+        return pd.DataFrame(data[1:], columns=data[0])
 
-    data = ws.get_all_values()
-
-    if len(data) == 0:
+    except:
         return pd.DataFrame()
-
-    headers = data[0]
-    rows = data[1:]
-
-    df = pd.DataFrame(
-        rows,
-        columns=headers
-    )
-
-    return df
 
 
 def delete_dataset(sheet_name):
@@ -138,6 +127,16 @@ def delete_dataset(sheet_name):
     )
 
     spreadsheet.del_worksheet(ws)
+
+@st.cache_data(ttl=30)
+def load_metadata():
+    sheet = get_metadata_sheet()
+    data = sheet.get_all_values()
+
+    if len(data) <= 1:
+        return pd.DataFrame()
+
+    return pd.DataFrame(data[1:], columns=data[0])
 
 
 # =====================================
@@ -345,37 +344,31 @@ if st.button("💾 Simpan Dataset"):
 
     if uploaded_file is None:
         st.warning("Silakan upload file terlebih dahulu")
+        st.stop()
 
-    elif nama_dataset.strip() == "":
+    if nama_dataset.strip() == "":
         st.warning("Nama dataset wajib diisi")
+        st.stop()
 
-    else:
+    sheet_name = create_dataset_table_name(opd_select, nama_dataset)
 
-        sheet_name = create_dataset_table_name(
-            opd_select,
-            nama_dataset
-        )
+    save_dataset_to_sheet(df_upload, sheet_name)
 
-        save_dataset_to_sheet(
-            df_upload,
-            sheet_name
-        )
+    metadata_sheet = get_metadata_sheet()
 
-        metadata_sheet = get_metadata_sheet()
+    metadata_sheet.append_row([
+        str(datetime.now().timestamp()),
+        opd_select,
+        nama_dataset,
+        keterangan,
+        sheet_name,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ])
 
-        metadata_sheet.append_row([
-            str(datetime.now().timestamp()),
-            opd_select,
-            nama_dataset,
-            keterangan,
-            sheet_name,
-            datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-        ])
+    st.success("✅ Dataset berhasil disimpan")
 
-st.success("✅ Dataset berhasil disimpan")
-st.rerun()
+    st.cache_data.clear()  # 🔥 refresh data cache
+    st.rerun()
 
 # =====================================
 # DATASET TERSIMPAN
@@ -385,7 +378,7 @@ st.markdown("---")
 st.subheader("📚 Dataset Tersimpan")
 
 metadata_sheet = get_metadata_sheet()
-all_data = metadata_sheet.get_all_values()
+metadata = load_metadata()
 
 if len(all_data) <= 1:
     st.info("Belum ada dataset.")
@@ -510,6 +503,7 @@ else:
                 )
 
                 st.rerun()
+                st.cache_data.clear()
 
             except Exception as e:
 
