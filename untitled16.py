@@ -374,11 +374,11 @@ if st.button("💾 Simpan Dataset"):
             )
         ])
 
+st.success("✅ Dataset berhasil disimpan")
+st.rerun()
+
 # =====================================
-# DATASET OPD
-# =====================================
-# =====================================
-# DATASET OPD
+# DATASET TERSIMPAN
 # =====================================
 
 st.markdown("---")
@@ -387,49 +387,58 @@ st.subheader("📚 Dataset Tersimpan")
 metadata_sheet = get_metadata_sheet()
 all_data = metadata_sheet.get_all_values()
 
-st.write(all_data)
+if len(all_data) <= 1:
+    st.info("Belum ada dataset.")
+else:
 
-all_data = metadata_sheet.get_all_values()
-
-metadata = pd.DataFrame(
-    all_data[1:],
-    columns=all_data[0]
-)
-
-if "keterangan" not in metadata.columns:
-    metadata["keterangan"] = ""
-
-if len(metadata) > 0:
+    metadata = pd.DataFrame(
+        all_data[1:],
+        columns=all_data[0]
+    )
 
     metadata = metadata[
         metadata["opd"] == opd_select
     ]
 
-    if len(metadata) > 0:
+    if len(metadata) == 0:
+        st.info("Belum ada dataset untuk OPD ini.")
+
+    else:
 
         dataset_pilih = st.selectbox(
             "Pilih Dataset",
-            metadata["nama_dataset"]
+            metadata["nama_dataset"].tolist()
         )
 
         row = metadata[
             metadata["nama_dataset"] == dataset_pilih
         ].iloc[0]
 
-        st.info(
-            f"📁 Dataset : {row['nama_dataset']}"
-        )
+        # ==========================
+        # INFORMASI DATASET
+        # ==========================
 
-        st.write(
-            f"**Keterangan :** {row.get('keterangan','-')}"
-        )
+        col1, col2 = st.columns(2)
 
-        st.write(
-            f"**Tanggal Upload :** {row['tanggal_upload']}"
-        )
-        # =====================================
+        with col1:
+            st.write(
+                f"**📁 Nama Dataset:** {row['nama_dataset']}"
+            )
+
+            st.write(
+                f"**📅 Tanggal Upload:** {row['tanggal_upload']}"
+            )
+
+        with col2:
+            st.write(
+                f"**📝 Keterangan:** {row.get('keterangan','-')}"
+            )
+
+        st.markdown("---")
+
+        # ==========================
         # TAMPILKAN DATASET
-        # =====================================
+        # ==========================
 
         try:
 
@@ -438,8 +447,6 @@ if len(metadata) > 0:
             df = read_dataset_from_sheet(
                 sheet_name
             )
-
-            st.markdown("---")
 
             st.subheader("📊 Data Dataset")
 
@@ -452,215 +459,63 @@ if len(metadata) > 0:
                 use_container_width=True
             )
 
-        except Exception as e:
-
-            st.error(
-                "Gagal menampilkan dataset"
-            )
-
-            st.exception(e)
-
-        # =====================================
-        # EDIT KETERANGAN
-        # =====================================
-
-        with st.expander("✏ Edit Keterangan"):
-
-            ket_baru = st.text_area(
-                "Keterangan",
-                value=row.get(
-                    "keterangan",
-                    ""
-                )
-            )
-
-            if st.button(
-                "Simpan Keterangan"
-            ):
-
-                cell = metadata_sheet.find(
-                    row["id"]
-                )
-
-                metadata_sheet.update_cell(
-                    cell.row,
-                    4,
-                    ket_baru
-                )
-
-                st.success(
-                    "Keterangan diperbarui"
-                )
-
-                st.rerun()
-
-        # =====================================
-        # BACA DATASET DARI GOOGLE SHEETS
-        # =====================================
-        
-        try:
-            sheet_name = str(
-                row.get("sheet_name", "")
-            ).strip()
-
-            
-
-            if sheet_name == "":
-
-                st.warning(
-                    "Sheet name kosong"
-                )
-
-                st.stop()
-
-            # BACA DATASET
-            df = read_dataset_from_sheet(
-                sheet_name
-            )
-            st.write("Shape:", df.shape)
-            st.write("Kolom:", df.columns.tolist())
-            st.dataframe(df.head())
-
-            st.success(
-                f"Dataset berhasil dibaca ({len(df)} baris)"
-            )
-            st.markdown("---")
-
-            st.subheader("📊 Data Dataset")
-
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
-
-            
-
-        except Exception as e:
-
-            st.error(
-                "Gagal membaca dataset."
-            )
-
-            st.exception(e)
-
-            st.stop()
-
-            col1,col2,col3 = st.columns(3)
-
-            col1.metric(
-                "Jumlah Baris",
-                len(df)
-            )
-
-            col2.metric(
-                "Jumlah Kolom",
-                len(df.columns)
-            )
-
-            col3.metric(
-                "Dataset",
-                row["nama_dataset"]
-            )
-
-            # =====================================
+            # ==========================
             # DOWNLOAD CSV
-            # =====================================
+            # ==========================
 
-            csv_download = df.to_csv(
+            csv = df.to_csv(
                 index=False
-            )
+            ).encode("utf-8")
 
             st.download_button(
                 "⬇ Download CSV",
-                csv_download,
+                data=csv,
                 file_name=f"{row['nama_dataset']}.csv",
                 mime="text/csv"
             )
 
-            # =====================================
-            # GRAFIK OTOMATIS
-            # =====================================
-
-            st.markdown("---")
-
-            st.subheader(
-                "📈 Visualisasi Data"
-            )
-
-            numeric_cols = df.select_dtypes(
-                include="number"
-            ).columns
-
-            if len(numeric_cols) > 0:
-
-                kolom_grafik = st.selectbox(
-                    "Pilih Kolom Numerik",
-                    numeric_cols
-                )
-
-                fig = px.histogram(
-                    df,
-                    x=kolom_grafik,
-                    title=f"Distribusi {kolom_grafik}"
-                )
-
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True
-                )
-
-            else:
-
-                st.info(
-                    "Tidak ada kolom numerik untuk divisualisasikan."
-                )
-
         except Exception as e:
 
             st.error(
-                "Gagal membaca dataset."
+                f"Gagal membaca dataset: {e}"
             )
 
-            st.exception(e)
-
-        # =====================================
-        # HAPUS DATASET
-        # =====================================
-
         st.markdown("---")
+
+        # ==========================
+        # HAPUS DATASET
+        # ==========================
 
         if st.button(
             "🗑 Hapus Dataset",
             type="primary"
         ):
 
-            
+            try:
 
-            cell = metadata_sheet.find(
-                row["id"]
-            )
+                delete_dataset(
+                    row["sheet_name"]
+                )
 
-            metadata_sheet.delete_rows(
-                cell.row
-            )
+                cell = metadata_sheet.find(
+                    row["id"]
+                )
 
-            st.success(
-                "Dataset berhasil dihapus"
-            )
+                metadata_sheet.delete_rows(
+                    cell.row
+                )
 
-            st.rerun()
+                st.success(
+                    "Dataset berhasil dihapus"
+                )
 
-    else:
+                st.rerun()
 
-        st.info(
-            "Belum ada dataset untuk OPD ini."
-        )
+            except Exception as e:
 
-else:
-
-    st.info(
-        "Belum ada dataset untuk OPD ini."
-    )
+                st.error(
+                    f"Gagal menghapus dataset: {e}"
+                )
 
 # =====================================
 # FOOTER
