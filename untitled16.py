@@ -466,46 +466,34 @@ except Exception as e:
 
 st.markdown("---")
 
-        # ==========================
-        # HAPUS DATASET
-        # ==========================
+  # ==========================
+# HAPUS DATASET
+# ==========================
 
-        if st.button(
-            "🗑 Hapus Dataset",
-            type="primary"
-        ):
+if st.button(
+    "🗑 Hapus Dataset",
+    type="primary"
+):
 
-            try:
+    try:
+        delete_dataset(row["sheet_name"])
 
-                delete_dataset(
-                    row["sheet_name"]
-                )
+        cell = metadata_sheet.find(row["id"])
+        metadata_sheet.delete_rows(cell.row)
 
-                cell = metadata_sheet.find(
-                    row["id"]
-                )
+        st.cache_data.clear()
 
-                metadata_sheet.delete_rows(
-                    cell.row
-                )
+        st.success("Dataset berhasil dihapus")
+        st.rerun()
 
-                st.success(
-                    "Dataset berhasil dihapus"
-                )
+    except Exception as e:
+        st.error(f"Gagal menghapus dataset: {e}")
 
-                st.rerun()
-                st.cache_data.clear()
-
-            except Exception as e:
-
-                st.error(
-                    f"Gagal menghapus dataset: {e}"
-                )
 
 # =====================================
 # FOOTER
 # =====================================
+
 st.markdown("---")
-st.caption(
-    "Sistem Dashboard Terintegrasi Kabupaten Belu"
+st.caption("Sistem Dashboard Terintegrasi Kabupaten Belu")
 )
