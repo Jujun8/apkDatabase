@@ -375,36 +375,28 @@ if st.button("💾 Simpan Dataset"):
 st.markdown("---")
 st.subheader("📚 Dataset Tersimpan")
 
-metadata_sheet = get_metadata_sheet()
 metadata = load_metadata()
 
-if len(all_data) <= 1:
+if metadata.empty:
     st.info("Belum ada dataset.")
-else:
+    st.stop()
 
-    metadata = pd.DataFrame(
-        all_data[1:],
-        columns=all_data[0]
-    )
+# filter OPD
+metadata = metadata[metadata["opd"] == opd_select]
 
-    metadata = metadata[
-        metadata["opd"] == opd_select
-    ]
+if metadata.empty:
+    st.info("Belum ada dataset untuk OPD ini.")
+    st.stop()
 
-    if len(metadata) == 0:
-        st.info("Belum ada dataset untuk OPD ini.")
+# pilih dataset
+dataset_pilih = st.selectbox(
+    "Pilih Dataset",
+    metadata["nama_dataset"].tolist()
+)
 
-    else:
-
-        dataset_pilih = st.selectbox(
-            "Pilih Dataset",
-            metadata["nama_dataset"].tolist()
-        )
-
-        row = metadata[
-            metadata["nama_dataset"] == dataset_pilih
-        ].iloc[0]
-
+row = metadata[
+    metadata["nama_dataset"] == dataset_pilih
+].iloc[0]
         # ==========================
         # INFORMASI DATASET
         # ==========================
