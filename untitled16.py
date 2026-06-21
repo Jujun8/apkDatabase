@@ -3,15 +3,9 @@ import pandas as pd
 import plotly.express as px
 import gspread
 from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
-import io
 import re
 from datetime import datetime
-from googleapiclient.http import (
-    MediaIoBaseUpload,
-    MediaIoBaseDownload
-)
+
 # =====================================
 # GOOGLE SHEETS & DRIVE
 # =====================================
@@ -32,15 +26,10 @@ creds = Credentials.from_service_account_info(
 
 gc = gspread.authorize(creds)
 
-drive_service = build(
-    "drive",
-    "v3",
-    credentials=creds
-)
 
 SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
 
-FOLDER_ID = "1izav_UYzBBbJB3QkAjJFzmxmY-aRkZOU"
+
 
 def create_dataset_table_name(opd, nama_dataset):
 
@@ -80,74 +69,65 @@ def get_metadata_sheet():
             "opd",
             "nama_dataset",
             "keterangan",
-            "file_id",
+            "sheet_name",
             "tanggal_upload"
         ])
 
         return ws
 
+def save_dataset_to_sheet(df, sheet_name):
 
-def upload_csv_to_drive(uploaded_file, filename):
+    spreadsheet = gc.open_by_key(
+        SPREADSHEET_ID
+    )
 
     try:
+        old_ws = spreadsheet.worksheet(sheet_name)
+        spreadsheet.del_worksheet(old_ws)
+    except:
+        pass
 
-        st.write("DEBUG FILE:", uploaded_file)
-        st.write("DEBUG FILENAME:", filename)
-        st.write("DEBUG FOLDER:", FOLDER_ID)
-
-        file_bytes = uploaded_file.getvalue()
-
-        st.write("UKURAN FILE:", len(file_bytes))
-
-        media = MediaIoBaseUpload(
-            io.BytesIO(file_bytes),
-            mimetype="text/csv",
-            resumable=False
-        )
-
-        file_metadata = {
-            "name": filename,
-            "parents": [FOLDER_ID]
-        }
-
-        uploaded = drive_service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields="id,name"
-        ).execute()
-
-        st.success("UPLOAD BERHASIL")
-        st.write(uploaded)
-
-        return uploaded["id"]
-
-   except Exception as e:
-
-        st.error("UPLOAD ERROR")
-        st.write(str(e))
-        return None
-
-def read_csv_from_drive(file_id):
-
-    request = drive_service.files().get_media(
-        fileId=file_id
+    ws = spreadsheet.add_worksheet(
+        title=sheet_name,
+        rows=max(len(df)+100, 1000),
+        cols=max(len(df.columns)+10, 20)
     )
 
-    file_io = io.BytesIO()
+    data = [df.columns.tolist()] + \
+           df.astype(str).values.tolist()
 
-    downloader = MediaIoBaseDownload(
-        file_io,
-        request
+    ws.update(data)
+
+    return True
+
+
+def read_dataset_from_sheet(sheet_name):
+
+    spreadsheet = gc.open_by_key(
+        SPREADSHEET_ID
     )
 
-    done = False
+    ws = spreadsheet.worksheet(
+        sheet_name
+    )
 
-    while not done:
-        status, done = downloader.next_chunk()
+    data = ws.get_all_records()
 
-    file_io.seek(0)
+    return pd.DataFrame(data)
 
-    return pd.read_csv(file_io)
+
+def delete_dataset(sheet_name):
+
+    spreadsheet = gc.open_by_key(
+        SPREADSHEET_ID
+    )
+
+    ws = spreadsheet.worksheet(
+        sheet_name
+    )
+
+    spreadsheet.del_worksheet(ws)
+
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -360,28 +340,15 @@ if st.button("💾 Simpan Dataset"):
 
     else:
 
-        dataset_table = create_dataset_table_name(
+        sheet_name = create_dataset_table_name(
             opd_select,
             nama_dataset
         )
 
-        file_id = upload_csv_to_drive(
-            uploaded_file,
-            f"{dataset_table}.csv"
+        save_dataset_to_sheet(
+            df_upload,
+            sheet_name
         )
-        st.write("FILE ID:", file_id)
-
-# DEBUG
-        st.write("DEBUG FILE ID:", file_id)
-
-# Cek apakah upload berhasil
-        if not file_id:
-
-            st.error(
-                "Upload ke Google Drive gagal."
-            )
-
-            st.stop()
 
         metadata_sheet = get_metadata_sheet()
 
@@ -390,17 +357,11 @@ if st.button("💾 Simpan Dataset"):
             opd_select,
             nama_dataset,
             keterangan,
-            file_id,
+            sheet_name,
             datetime.now().strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
         ])
-
-        st.success(
-            "✅ Dataset berhasil disimpan"
-        )
-
-        st.rerun()
 
 # =====================================
 # DATASET OPD
@@ -485,37 +446,42 @@ if len(metadata) > 0:
                 st.rerun()
 
         # =====================================
-        # BACA DATASET DARI DRIVE
+        # BACA DATASET DARI GOOGLE SHEETS
         # =====================================
 
         try:
+
             st.write("ROW DATA:")
             st.json(dict(row))
 
-            st.write("FILE ID:")
-            st.write(repr(row.get("file_id")))
-
-            file_id = str(
-                row.get("file_id", "")
+            sheet_name = str(
+                row.get("sheet_name", "")
             ).strip()
 
-            if file_id == "":
+            st.write("SHEET NAME:")
+            st.write(sheet_name)
+
+            if sheet_name == "":
 
                 st.warning(
-                    "Dataset ini tidak memiliki file yang tersimpan di Google Drive."
+                    "Dataset ini belum memiliki sheet_name."
                 )
 
-            else:
+                st.stop()
 
-                df = read_csv_from_drive(
-                    file_id
-                 )
+            df = read_dataset_from_sheet(
+                sheet_name
+            )
 
-                st.dataframe(
-                    df,
-                    use_container_width=True
-                 )
+        except Exception as e:
 
+            st.error(
+                "Gagal membaca dataset."
+            )
+
+            st.exception(e)
+
+            st.stop()
             st.markdown("---")
 
             st.subheader(
@@ -616,9 +582,7 @@ if len(metadata) > 0:
             type="primary"
         ):
 
-            delete_file_drive(
-                row["file_id"]
-            )
+            
 
             cell = metadata_sheet.find(
                 row["id"]
