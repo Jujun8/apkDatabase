@@ -370,6 +370,7 @@ if st.button("💾 Simpan Dataset"):
             uploaded_file,
             f"{dataset_table}.csv"
         )
+        st.write("FILE ID:", file_id)
 
 # DEBUG
         st.write("DEBUG FILE ID:", file_id)
