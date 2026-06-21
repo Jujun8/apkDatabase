@@ -450,6 +450,14 @@ if len(metadata) > 0:
         # =====================================
 
         try:
+            st.markdown("---")
+
+            st.subheader("📊 Data Dataset")
+
+            st.dataframe(
+                df,
+                use_container_width=True
+            )
 
             st.write("ROW DATA:")
             st.json(dict(row))
@@ -468,6 +476,14 @@ if len(metadata) > 0:
                 )
 
                 st.stop()
+
+            df = read_dataset_from_sheet(
+                 sheet_name
+            )
+
+            st.success(
+                 f"Dataset berhasil dibaca ({len(df)} baris)"
+            )
 
             df = read_dataset_from_sheet(
                 sheet_name
