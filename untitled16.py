@@ -381,6 +381,10 @@ if st.button("💾 Simpan Dataset"):
 # =====================================
 # DATASET OPD
 # =====================================
+# =====================================
+# DATASET OPD
+# =====================================
+
 st.markdown("---")
 st.subheader("📚 Dataset Tersimpan")
 
@@ -389,8 +393,9 @@ metadata_sheet = get_metadata_sheet()
 data_meta = metadata_sheet.get_all_records()
 
 metadata = pd.DataFrame(data_meta)
-st.write("Kolom Metadata:")
-st.write(metadata.columns.tolist())
+
+if "keterangan" not in metadata.columns:
+    metadata["keterangan"] = ""
 
 if len(metadata) > 0:
 
@@ -414,12 +419,174 @@ if len(metadata) > 0:
         )
 
         st.write(
-            f"**Keterangan :** {row.get('keterangan', '-')}"
+            f"**Keterangan :** {row.get('keterangan','-')}"
         )
 
         st.write(
             f"**Tanggal Upload :** {row['tanggal_upload']}"
         )
+
+        # =====================================
+        # EDIT KETERANGAN
+        # =====================================
+
+        with st.expander("✏ Edit Keterangan"):
+
+            ket_baru = st.text_area(
+                "Keterangan",
+                value=row.get(
+                    "keterangan",
+                    ""
+                )
+            )
+
+            if st.button(
+                "Simpan Keterangan"
+            ):
+
+                cell = metadata_sheet.find(
+                    row["id"]
+                )
+
+                metadata_sheet.update_cell(
+                    cell.row,
+                    4,
+                    ket_baru
+                )
+
+                st.success(
+                    "Keterangan diperbarui"
+                )
+
+                st.rerun()
+
+        # =====================================
+        # BACA DATASET DARI DRIVE
+        # =====================================
+
+        try:
+
+            df = read_csv_from_drive(
+                row["file_id"]
+            )
+
+            st.markdown("---")
+
+            st.subheader(
+                "📊 Data Dataset"
+            )
+
+            st.dataframe(
+                df,
+                use_container_width=True
+            )
+
+            col1,col2,col3 = st.columns(3)
+
+            col1.metric(
+                "Jumlah Baris",
+                len(df)
+            )
+
+            col2.metric(
+                "Jumlah Kolom",
+                len(df.columns)
+            )
+
+            col3.metric(
+                "Dataset",
+                row["nama_dataset"]
+            )
+
+            # =====================================
+            # DOWNLOAD CSV
+            # =====================================
+
+            csv_download = df.to_csv(
+                index=False
+            )
+
+            st.download_button(
+                "⬇ Download CSV",
+                csv_download,
+                file_name=f"{row['nama_dataset']}.csv",
+                mime="text/csv"
+            )
+
+            # =====================================
+            # GRAFIK OTOMATIS
+            # =====================================
+
+            st.markdown("---")
+
+            st.subheader(
+                "📈 Visualisasi Data"
+            )
+
+            numeric_cols = df.select_dtypes(
+                include="number"
+            ).columns
+
+            if len(numeric_cols) > 0:
+
+                kolom_grafik = st.selectbox(
+                    "Pilih Kolom Numerik",
+                    numeric_cols
+                )
+
+                fig = px.histogram(
+                    df,
+                    x=kolom_grafik,
+                    title=f"Distribusi {kolom_grafik}"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+            else:
+
+                st.info(
+                    "Tidak ada kolom numerik untuk divisualisasikan."
+                )
+
+        except Exception as e:
+
+            st.error(
+                "Gagal membaca dataset."
+            )
+
+            st.exception(e)
+
+        # =====================================
+        # HAPUS DATASET
+        # =====================================
+
+        st.markdown("---")
+
+        if st.button(
+            "🗑 Hapus Dataset",
+            type="primary"
+        ):
+
+            delete_file_drive(
+                row["file_id"]
+            )
+
+            cell = metadata_sheet.find(
+                row["id"]
+            )
+
+            metadata_sheet.delete_rows(
+                cell.row
+            )
+
+            st.success(
+                "Dataset berhasil dihapus"
+            )
+
+            st.rerun()
 
     else:
 
