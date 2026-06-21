@@ -406,21 +406,21 @@ row = metadata[
 
 col1, col2 = st.columns(2)
 
-        with col1:
-            st.write(
-                f"**📁 Nama Dataset:** {row['nama_dataset']}"
-            )
+with col1:
+    st.write(
+         f"**📁 Nama Dataset:** {row['nama_dataset']}"
+    )
 
-            st.write(
-                f"**📅 Tanggal Upload:** {row['tanggal_upload']}"
-            )
+    st.write(
+        f"**📅 Tanggal Upload:** {row['tanggal_upload']}"
+    )
 
-        with col2:
-            st.write(
-                f"**📝 Keterangan:** {row.get('keterangan','-')}"
-            )
+with col2:
+    st.write(
+         f"**📝 Keterangan:** {row.get('keterangan','-')}"
+    )
 
-        st.markdown("---")
+st.markdown("---")
 
         # ==========================
         # TAMPILKAN DATASET
