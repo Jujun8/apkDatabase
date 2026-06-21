@@ -495,4 +495,11 @@ if st.button(
 # =====================================
 
 st.markdown("---")
-st.caption("Sistem Dashboard Terintegrasi Kabupaten Belu"))
+st.caption("Sistem Dashboard Terintegrasi Kabupaten Belu")
+
+
+
+
+
+
+
