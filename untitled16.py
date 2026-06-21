@@ -467,6 +467,8 @@ if len(metadata) > 0:
         # =====================================
 
         try:
+            st.write("FILE ID:")
+            st.write(row.get("file_id"))
 
             df = read_csv_from_drive(
                 row["file_id"]
