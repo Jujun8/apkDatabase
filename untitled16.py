@@ -111,9 +111,20 @@ def read_dataset_from_sheet(sheet_name):
         sheet_name
     )
 
-    data = ws.get_all_records()
+    data = ws.get_all_values()
 
-    return pd.DataFrame(data)
+    if len(data) == 0:
+        return pd.DataFrame()
+
+    headers = data[0]
+    rows = data[1:]
+
+    df = pd.DataFrame(
+        rows,
+        columns=headers
+    )
+
+    return df
 
 
 def delete_dataset(sheet_name):
@@ -468,6 +479,9 @@ if len(metadata) > 0:
             df = read_dataset_from_sheet(
                 sheet_name
             )
+            st.write("Shape:", df.shape)
+            st.write("Kolom:", df.columns.tolist())
+            st.dataframe(df.head())
 
             st.success(
                 f"Dataset berhasil dibaca ({len(df)} baris)"
