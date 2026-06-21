@@ -343,11 +343,11 @@ if uploaded_file is not None:
 
 if st.button("💾 Simpan Dataset"):
 
-    if nama_dataset.strip() == "":
+    if uploaded_file is None:
+        st.warning("Silakan upload file terlebih dahulu")
 
-        st.warning(
-            "Nama dataset wajib diisi"
-        )
+    elif nama_dataset.strip() == "":
+        st.warning("Nama dataset wajib diisi")
 
     else:
 
@@ -388,7 +388,6 @@ metadata_sheet = get_metadata_sheet()
 all_data = metadata_sheet.get_all_values()
 
 st.write(all_data)
-st.stop()
 
 all_data = metadata_sheet.get_all_values()
 
