@@ -449,7 +449,7 @@ if len(metadata) > 0:
         # BACA DATASET DARI GOOGLE SHEETS
         # =====================================
 
-       try:
+     try:
 
             st.write("ROW DATA:")
             st.json(dict(row))
