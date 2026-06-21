@@ -449,15 +449,7 @@ if len(metadata) > 0:
         # BACA DATASET DARI GOOGLE SHEETS
         # =====================================
 
-        try:
-            st.markdown("---")
-
-            st.subheader("📊 Data Dataset")
-
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
+       try:
 
             st.write("ROW DATA:")
             st.json(dict(row))
@@ -468,12 +460,16 @@ if len(metadata) > 0:
 
             st.write("SHEET NAME:")
             st.write(sheet_name)
+
             if sheet_name == "":
+
                 st.warning(
                     "Sheet name kosong"
                 )
+
                 st.stop()
 
+            # BACA DATASET
             df = read_dataset_from_sheet(
                 sheet_name
             )
@@ -482,37 +478,21 @@ if len(metadata) > 0:
                 f"Dataset berhasil dibaca ({len(df)} baris)"
             )
 
-            if sheet_name == "":
-
-                st.warning(
-                    "Dataset ini belum memiliki sheet_name."
-                )
-
-                st.stop()
-
-            df = read_dataset_from_sheet(
-                 sheet_name
-            )
-
-            st.success(
-                 f"Dataset berhasil dibaca ({len(df)} baris)"
-            )
-
-            df = read_dataset_from_sheet(
-                sheet_name
-            )
-
-        
-    # DEBUG
+            # DEBUG
             st.write("JUMLAH BARIS:")
             st.write(len(df))
 
             st.write("NAMA KOLOM:")
             st.write(df.columns.tolist())
 
-            st.write("ISI DATA:")
-            st.dataframe(df)
+            st.markdown("---")
 
+            st.subheader("📊 Data Dataset")
+
+            st.dataframe(
+                df,
+                use_container_width=True
+            )
 
         except Exception as e:
 
@@ -523,16 +503,6 @@ if len(metadata) > 0:
             st.exception(e)
 
             st.stop()
-            st.markdown("---")
-
-            st.subheader(
-                "📊 Data Dataset"
-            )
-
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
 
             col1,col2,col3 = st.columns(3)
 
