@@ -428,6 +428,38 @@ if len(metadata) > 0:
         st.write(
             f"**Tanggal Upload :** {row['tanggal_upload']}"
         )
+        # =====================================
+        # TAMPILKAN DATASET
+        # =====================================
+
+        try:
+
+            sheet_name = row["sheet_name"]
+
+            df = read_dataset_from_sheet(
+                sheet_name
+            )
+
+            st.markdown("---")
+
+            st.subheader("📊 Data Dataset")
+
+            st.write(
+                f"Jumlah Data: {len(df)} baris"
+            )
+
+            st.dataframe(
+                df,
+                use_container_width=True
+            )
+
+        except Exception as e:
+
+            st.error(
+                "Gagal menampilkan dataset"
+            )
+
+            st.exception(e)
 
         # =====================================
         # EDIT KETERANGAN
