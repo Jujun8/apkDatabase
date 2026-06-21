@@ -472,6 +472,14 @@ if len(metadata) > 0:
             st.success(
                 f"Dataset berhasil dibaca ({len(df)} baris)"
             )
+            st.markdown("---")
+
+            st.subheader("📊 Data Dataset")
+
+            st.dataframe(
+                df,
+                use_container_width=True
+            )
 
             
 
