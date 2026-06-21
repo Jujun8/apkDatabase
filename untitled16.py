@@ -450,16 +450,11 @@ if len(metadata) > 0:
         # =====================================
         
         try:
-
-            st.write("ROW DATA:")
-            st.json(dict(row))
-
             sheet_name = str(
                 row.get("sheet_name", "")
             ).strip()
 
-            st.write("SHEET NAME:")
-            st.write(sheet_name)
+            
 
             if sheet_name == "":
 
@@ -478,21 +473,7 @@ if len(metadata) > 0:
                 f"Dataset berhasil dibaca ({len(df)} baris)"
             )
 
-            # DEBUG
-            st.write("JUMLAH BARIS:")
-            st.write(len(df))
-
-            st.write("NAMA KOLOM:")
-            st.write(df.columns.tolist())
-
-            st.markdown("---")
-
-            st.subheader("📊 Data Dataset")
-
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
+            
 
         except Exception as e:
 
