@@ -91,12 +91,18 @@ def upload_csv_to_drive(uploaded_file, filename):
 
     try:
 
+        st.write("DEBUG FILE:", uploaded_file)
+        st.write("DEBUG FILENAME:", filename)
+        st.write("DEBUG FOLDER:", FOLDER_ID)
+
         file_bytes = uploaded_file.getvalue()
+
+        st.write("UKURAN FILE:", len(file_bytes))
 
         media = MediaIoBaseUpload(
             io.BytesIO(file_bytes),
             mimetype="text/csv",
-            resumable=True
+            resumable=False
         )
 
         file_metadata = {
@@ -107,8 +113,11 @@ def upload_csv_to_drive(uploaded_file, filename):
         uploaded = drive_service.files().create(
             body=file_metadata,
             media_body=media,
-            fields="id"
+            fields="id,name"
         ).execute()
+
+        st.success("UPLOAD BERHASIL")
+        st.write(uploaded)
 
         return uploaded["id"]
 
@@ -116,6 +125,7 @@ def upload_csv_to_drive(uploaded_file, filename):
 
         st.error("UPLOAD ERROR")
         st.exception(e)
+
         return None
 
 def read_csv_from_drive(file_id):
