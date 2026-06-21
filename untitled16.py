@@ -8,6 +8,8 @@ from googleapiclient.http import MediaIoBaseUpload
 import io
 import re
 from datetime import datetime
+from googleapiclient.http 
+import MediaIoBaseDownload
 
 # =====================================
 # GOOGLE SHEETS & DRIVE
@@ -85,29 +87,6 @@ def get_metadata_sheet():
 
 
 def upload_csv_to_drive(uploaded_file, filename):
-from googleapiclient.http import MediaIoBaseDownload
-
-def read_csv_from_drive(file_id):
-
-    request = drive_service.files().get_media(
-        fileId=file_id
-    )
-
-    file_io = io.BytesIO()
-
-    downloader = MediaIoBaseDownload(
-        file_io,
-        request
-    )
-
-    done = False
-
-    while not done:
-        status, done = downloader.next_chunk()
-
-    file_io.seek(0)
-
-    return pd.read_csv(file_io)
 
     try:
 
@@ -137,6 +116,28 @@ def read_csv_from_drive(file_id):
         st.error("UPLOAD ERROR")
         st.exception(e)
         return None
+
+def read_csv_from_drive(file_id):
+
+    request = drive_service.files().get_media(
+        fileId=file_id
+    )
+
+    file_io = io.BytesIO()
+
+    downloader = MediaIoBaseDownload(
+        file_io,
+        request
+    )
+
+    done = False
+
+    while not done:
+        status, done = downloader.next_chunk()
+
+    file_io.seek(0)
+
+    return pd.read_csv(file_io)
 
 # =====================================
 # KONFIGURASI HALAMAN
