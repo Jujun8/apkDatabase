@@ -391,7 +391,7 @@ if len(metadata) > 0:
         )
 
         st.write(
-            f"**Keterangan :** {row['keterangan']}"
+            f"**Keterangan :** {row.get('keterangan', '-')}"
         )
 
         st.write(
