@@ -468,6 +468,19 @@ if len(metadata) > 0:
 
             st.write("SHEET NAME:")
             st.write(sheet_name)
+            if sheet_name == "":
+                st.warning(
+                    "Sheet name kosong"
+                )
+                st.stop()
+
+            df = read_dataset_from_sheet(
+                sheet_name
+            )
+
+            st.success(
+                f"Dataset berhasil dibaca ({len(df)} baris)"
+            )
 
             if sheet_name == "":
 
