@@ -390,9 +390,12 @@ all_data = metadata_sheet.get_all_values()
 st.write(all_data)
 st.stop()
 
-data_meta = metadata_sheet.get_all_records()
+all_data = metadata_sheet.get_all_values()
 
-metadata = pd.DataFrame(data_meta)
+metadata = pd.DataFrame(
+    all_data[1:],
+    columns=all_data[0]
+)
 
 if "keterangan" not in metadata.columns:
     metadata["keterangan"] = ""
