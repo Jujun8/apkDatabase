@@ -368,6 +368,8 @@ metadata_sheet = get_metadata_sheet()
 data_meta = metadata_sheet.get_all_records()
 
 metadata = pd.DataFrame(data_meta)
+st.write("Kolom Metadata:")
+st.write(metadata.columns.tolist())
 
 if len(metadata) > 0:
 
