@@ -28,16 +28,14 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 gc = get_gspread_client()
+
+SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
+
 @st.cache_resource
 def get_spreadsheet():
     return gc.open_by_key(SPREADSHEET_ID)
 
 spreadsheet = get_spreadsheet()
-
-
-SPREADSHEET_ID = "1devdxVPKESQCYCaC8UdEZt2jyqjxFXPLhGN2nVlLiQo"
-
-
 
 def create_dataset_table_name(opd, nama_dataset):
 
