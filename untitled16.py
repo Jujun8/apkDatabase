@@ -361,6 +361,18 @@ if st.button("💾 Simpan Dataset"):
             f"{dataset_table}.csv"
         )
 
+# DEBUG
+        st.write("DEBUG FILE ID:", file_id)
+
+# Cek apakah upload berhasil
+        if not file_id:
+
+            st.error(
+                "Upload ke Google Drive gagal."
+            )
+
+            st.stop()
+
         metadata_sheet = get_metadata_sheet()
 
         metadata_sheet.append_row([
@@ -473,9 +485,26 @@ if len(metadata) > 0:
             st.write("FILE ID:")
             st.write(repr(row.get("file_id")))
 
-            df = read_csv_from_drive(
-                row["file_id"]
-            )
+            file_id = str(
+                row.get("file_id", "")
+            ).strip()
+
+            if file_id == "":
+
+                st.warning(
+                    "Dataset ini tidak memiliki file yang tersimpan di Google Drive."
+                )
+
+            else:
+
+                df = read_csv_from_drive(
+                    file_id
+                 )
+
+                st.dataframe(
+                    df,
+                    use_container_width=True
+                 )
 
             st.markdown("---")
 
