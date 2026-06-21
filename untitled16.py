@@ -502,6 +502,18 @@ if len(metadata) > 0:
                 sheet_name
             )
 
+        
+    # DEBUG
+            st.write("JUMLAH BARIS:")
+            st.write(len(df))
+
+            st.write("NAMA KOLOM:")
+            st.write(df.columns.tolist())
+
+            st.write("ISI DATA:")
+            st.dataframe(df)
+
+
         except Exception as e:
 
             st.error(
