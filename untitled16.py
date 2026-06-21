@@ -459,10 +459,10 @@ try:
                 mime="text/csv"
             )
 
-        except Exception as e:
-            st.error(
-                f"Gagal membaca dataset: {e}"
-            )
+            except Exception as e:
+                st.error(
+                    f"Gagal membaca dataset: {e}"
+                )
 
         st.markdown("---")
 
