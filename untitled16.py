@@ -385,6 +385,10 @@ st.markdown("---")
 st.subheader("📚 Dataset Tersimpan")
 
 metadata_sheet = get_metadata_sheet()
+all_data = metadata_sheet.get_all_values()
+
+st.write(all_data)
+st.stop()
 
 data_meta = metadata_sheet.get_all_records()
 
