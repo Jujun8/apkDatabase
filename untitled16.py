@@ -462,6 +462,42 @@ if st.button("💾 Simpan Dataset"):
     save_dataset_to_sheet(df_upload, sheet_name)
 
     metadata_sheet = get_metadata_sheet()
+    pdf_link = ""
+
+if uploaded_pdf is not None:
+
+    drive_service = get_drive_service()
+
+    file_metadata = {
+        "name": uploaded_pdf.name
+    }
+
+    media = MediaIoBaseUpload(
+        uploaded_pdf,
+        mimetype="application/pdf",
+        resumable=True
+    )
+
+    uploaded_file_drive = drive_service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields="id,name"
+    ).execute()
+
+    file_id = uploaded_file_drive["id"]
+
+    drive_service.permissions().create(
+        fileId=file_id,
+        body={
+            "type": "anyone",
+            "role": "reader"
+        }
+    ).execute()
+
+    pdf_link = f"https://drive.google.com/file/d/{file_id}/view"
+
+    st.success("PDF berhasil diupload")
+    st.write("Link PDF:", pdf_link)
 
     metadata_sheet.append_row([
         str(datetime.now().timestamp()),
