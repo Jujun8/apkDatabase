@@ -9,6 +9,10 @@ import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from io import BytesIO
 st.cache_data.clear()
 st.cache_resource.clear()
 
@@ -143,12 +147,11 @@ def load_metadata():
 
     return pd.DataFrame(data[1:], columns=data[0])
 
-def df_to_pdf(df):
+def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
     buffer = BytesIO()
 
     pdf = SimpleDocTemplate(buffer)
 
-    # data tabel (header + isi)
     data = [df.columns.tolist()] + df.astype(str).values.tolist()
 
     table = Table(data)
@@ -162,11 +165,51 @@ def df_to_pdf(df):
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
     ]))
 
-    pdf.build([table])
+    def draw_header(canvas_obj, doc):
+
+        canvas_obj.saveState()
+
+        # =========================
+        # LOGO
+        # =========================
+        try:
+            logo = ImageReader(logo_path)
+            canvas_obj.drawImage(
+                logo,
+                40,   # x kiri
+                750,  # y atas
+                width=50,
+                height=50,
+                mask='auto'
+            )
+        except:
+            pass  # kalau logo tidak ada, tidak error
+
+        # =========================
+        # JUDUL
+        # =========================
+        canvas_obj.setFont("Helvetica-Bold", 14)
+        canvas_obj.drawString(110, 780, "PEMERINTAH KABUPATEN BELU")
+
+        canvas_obj.setFont("Helvetica", 10)
+        canvas_obj.drawString(110, 760, watermark_text)
+
+        # =========================
+        # WATERMARK
+        # =========================
+        canvas_obj.setFont("Helvetica-Bold", 50)
+        canvas_obj.setFillGray(0.9)
+
+        canvas_obj.translate(300, 400)
+        canvas_obj.rotate(45)
+        canvas_obj.drawCentredString(0, 0, "BELU DATA")
+
+        canvas_obj.restoreState()
+
+    pdf.build([table], onFirstPage=draw_header, onLaterPages=draw_header)
 
     buffer.seek(0)
     return buffer
-
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -473,10 +516,10 @@ try:
             )
 
             # ==========================
-            # DOWNLOAD CSV
+            # DOWNLOAD PDF
             # ==========================
 
-            pdf_file = df_to_pdf(df)
+            pdf_file = df_to_pdf(df, logo_path="logo.png")
 
             st.download_button(
                 "⬇ Download PDF",
