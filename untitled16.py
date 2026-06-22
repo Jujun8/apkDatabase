@@ -324,7 +324,6 @@ opd_select = st.sidebar.selectbox(
     opd_groups[group_select]
 )
 
-st.sidebar.title("🏢 Pusat Data Belu")
 
 # =====================================
 # HEADER
