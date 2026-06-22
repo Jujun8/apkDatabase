@@ -170,35 +170,21 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
         def add_header(canvas_obj, doc):
             canvas_obj.saveState()
 
-            # =====================
-            # LOGO
-            # =====================
+            # ================= LOGO =================
             try:
-                from reportlab.lib.utils import ImageReader
                 logo = ImageReader(logo_path)
-
-                canvas_obj.drawImage(
-                    logo,
-                    40, 750,
-                    width=50,
-                    height=50,
-                    mask='auto'
-                )
+                canvas_obj.drawImage(logo, 40, 750, width=50, height=50, mask='auto')
             except:
-                pass  # kalau logo tidak ada
+                pass
 
-            # =====================
-            # JUDUL
-            # =====================
+            # ================= JUDUL =================
             canvas_obj.setFont("Helvetica-Bold", 12)
             canvas_obj.drawString(110, 780, "PEMERINTAH KABUPATEN BELU")
 
             canvas_obj.setFont("Helvetica", 10)
             canvas_obj.drawString(110, 760, watermark_text)
 
-            # =====================
-            # WATERMARK
-            # =====================
+            # ================= WATERMARK =================
             canvas_obj.setFont("Helvetica-Bold", 60)
             canvas_obj.setFillGray(0.92)
 
@@ -217,52 +203,6 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
     except Exception as e:
         st.error(f"Gagal membuat PDF: {e}")
         return None
-        # =========================
-        # LOGO
-        # =========================
-        try:
-            logo = ImageReader(logo_path)
-            canvas_obj.drawImage(
-                logo,
-                40,   # x kiri
-                750,  # y atas
-                width=50,
-                height=50,
-                mask='auto'
-            )
-        except:
-            pass  # kalau logo tidak ada, tidak error
-
-        # =========================
-        # JUDUL
-        # =========================
-        canvas_obj.setFont("Helvetica-Bold", 14)
-        canvas_obj.drawString(110, 780, "PEMERINTAH KABUPATEN BELU")
-
-        canvas_obj.setFont("Helvetica", 10)
-        canvas_obj.drawString(110, 760, watermark_text)
-
-        # =========================
-        # WATERMARK
-        # =========================
-def add_watermark(canvas_obj, doc):
-    canvas_obj.saveState()
-
-    canvas_obj.setFont("Helvetica-Bold", 80)
-    canvas_obj.setFillGray(0.95)  # lebih soft lagi
-
-    width, height = doc.pagesize
-
-    canvas_obj.translate(width/2, height/2)
-    canvas_obj.rotate(35)
-
-    canvas_obj.drawCentredString(0, 0, watermark_text)
-
-    canvas_obj.restoreState()
-    pdf.build([table], onFirstPage=draw_header, onLaterPages=draw_header)
-
-    buffer.seek(0)
-    return buffer
 
 # =====================================
 # KONFIGURASI HALAMAN
