@@ -381,9 +381,7 @@ def df_to_pdf(
 
     return buffer
 
-        except Exception as e:
-            st.error(f"Gagal membuat PDF: {e}")
-            return None
+      
 
 
 
