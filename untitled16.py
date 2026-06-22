@@ -323,10 +323,6 @@ opd_select = st.sidebar.selectbox(
     "Pilih OPD",
     opd_groups[group_select]
 )
-st.sidebar.image(
-    "logo.png",
-    width=120
-)
 
 st.sidebar.title("🏢 Pusat Data Belu")
 
