@@ -515,24 +515,23 @@ st.dataframe(df, use_container_width=True)
 # ==========================
 # DOWNLOAD PDF
 # ==========================
-pdf_file = df_to_pdf(
-    df,
-    watermark_text="Bidang Statistik dan Persandian",
-    logo_path="logo.png"
-)
-
-if pdf_file is not None:
-    st.download_button(
-        "⬇ Download PDF",
-        data=pdf_file,
-        file_name=f"{row['nama_dataset']}.pdf",
-        mime="application/pdf"
+try:
+    pdf_file = df_to_pdf(
+        df,
+        watermark_text="Bidang Statistik dan Persandian",
+        logo_path="logo.png"
     )
+
+    if pdf_file is not None:
+        st.download_button(
+            "⬇ Download PDF",
+            data=pdf_file,
+            file_name=f"{row['nama_dataset']}.pdf",
+            mime="application/pdf"
+        )
+
 except Exception as e:
-     st.error(
-        f"Gagal membaca dataset: {e}"
-    )
-
+    st.error(f"Gagal membuat PDF: {e}")
 st.markdown("---")
 
 
