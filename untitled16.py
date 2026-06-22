@@ -186,25 +186,22 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
 
             # ================= WATERMARK =================
             
-            canvas_obj.saveState()
-
             width, height = doc.pagesize
 
-            canvas_obj.translate(width/2, height/2)
-            canvas_obj.rotate(45)
+            canvas_obj.saveState()
 
-            canvas_obj.setFillGray(0.87)
+            canvas_obj.setFont("Helvetica-Bold", 42)
+            canvas_obj.setFillGray(0.88)
 
-            canvas_obj.setFont("Helvetica-Bold", 38)
             canvas_obj.drawCentredString(
-                0,
-                20,
+                width / 2,
+                height / 2 + 20,
                 "BIDANG STATISTIK"
             )
 
             canvas_obj.drawCentredString(
-                0,
-                -20,
+                width / 2,
+                height / 2 - 30,
                 "DAN PERSANDIAN"
             )
 
