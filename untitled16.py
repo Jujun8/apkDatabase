@@ -550,39 +550,52 @@ st.markdown("---")
         # TAMPILKAN DATASET
         # ==========================
 try:
+    sheet_name = row["sheet_name"]
+    df = read_dataset_from_sheet(sheet_name)
 
-            sheet_name = row["sheet_name"]
+except Exception as e:
+    st.error(f"Gagal membaca dataset: {e}")
+    st.stop()
 
-            df = read_dataset_from_sheet(
-                sheet_name
-            )
+# ==========================
+# VALIDASI DATA
+# ==========================
+if df is None or df.empty:
+    st.warning("Dataset kosong")
+    st.stop()
 
-            st.subheader("📊 Data Dataset")
+# ==========================
+# TAMPIL DATASET
+# ==========================
+st.subheader("📊 Data Dataset")
+st.write(f"Jumlah Data: {len(df)} baris")
 
-            st.write(
-                f"Jumlah Data: {len(df)} baris"
-            )
+st.dataframe(df, use_container_width=True)
 
-            st.dataframe(
-                df,
-                use_container_width=True
-            )
+# ==========================
+# DOWNLOAD PDF
+# ==========================
+pdf_file = df_to_pdf(
+    df,
+    watermark_text="Bidang Statistik dan Persandian",
+    logo_path="logo.png"
+)
 
-            # ==========================
-            # DOWNLOAD PDF
-            # ==========================
-
-            pdf_file = df_to_pdf(
-                df,
-                watermark_text="SISTEM DATA BELU",
-                logo_path="logo.png"
-            )
+if pdf_file is not None:
+    st.download_button(
+        "⬇ Download PDF",
+        data=pdf_file,
+        file_name=f"{row['nama_dataset']}.pdf",
+        mime="application/pdf"
+    )
 except Exception as e:
      st.error(
         f"Gagal membaca dataset: {e}"
     )
 
 st.markdown("---")
+
+
 
 # ==========================
 # HAPUS DATASET
