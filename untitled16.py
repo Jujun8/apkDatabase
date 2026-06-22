@@ -374,10 +374,6 @@ uploaded_file = st.file_uploader(
     "Upload File CSV",
     type=["csv"]
 )
-uploaded_pdf = st.file_uploader(
-    "📄 Upload File PDF",
-    type=["pdf"]
-)
 
 if uploaded_file is not None:
 
