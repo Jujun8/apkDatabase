@@ -16,6 +16,19 @@ from io import BytesIO
 from reportlab.lib.utils import ImageReader
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer,
+    Image,
+    PageBreak
+)
+
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 st.cache_data.clear()
 st.cache_resource.clear()
 
@@ -150,89 +163,231 @@ def load_metadata():
 
     return pd.DataFrame(data[1:], columns=data[0])
 
-def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
-    buffer = BytesIO()
+def add_header(canvas_obj, doc):
 
+    width, height = doc.pagesize
+
+    canvas_obj.saveState()
+
+    # LOGO
     try:
-        pdf = SimpleDocTemplate(buffer)
+        logo = ImageReader("logo.png")
 
-        data = [df.columns.tolist()] + df.astype(str).values.tolist()
+        canvas_obj.drawImage(
+            logo,
+            40,
+            height - 70,
+            width=50,
+            height=50,
+            mask='auto'
+        )
+    except:
+        pass
 
-        table = Table(data)
+    # HEADER
+    canvas_obj.setFont("Helvetica-Bold", 14)
+    canvas_obj.drawString(
+        110,
+        height - 40,
+        "PEMERINTAH KABUPATEN BELU"
+    )
 
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ]))
+    canvas_obj.setFont("Helvetica", 10)
+    canvas_obj.drawString(
+        110,
+        height - 55,
+        "Sistem Informasi Data Sektoral"
+    )
 
-        def add_header(canvas_obj, doc):
-            canvas_obj.saveState()
+    # WATERMARK
+    canvas_obj.saveState()
 
-            # ================= LOGO =================
+    canvas_obj.setFillGray(0.92)
+    canvas_obj.setFont(
+        "Helvetica-Bold",
+        35
+    )
+
+    canvas_obj.drawCentredString(
+        width / 2,
+        height / 2,
+        "BIDANG STATISTIK DAN PERSANDIAN"
+    )
+
+    canvas_obj.restoreState()
+
+    # NOMOR HALAMAN
+    canvas_obj.setFillGray(0)
+
+    canvas_obj.setFont(
+        "Helvetica",
+        8
+    )
+
+    canvas_obj.drawRightString(
+        width - 30,
+        20,
+        f"Halaman {canvas_obj.getPageNumber()}"
+    )
+
+    canvas_obj.restoreState()
+
+def df_to_pdf(
+df,
+nama_dataset,
+keterangan,
+opd,
+logo_path=None
+):
+buffer = BytesIO()
+
+```
+doc = SimpleDocTemplate(
+    buffer,
+    pagesize=A4,
+    topMargin=80,
+    bottomMargin=40
+)
+
+styles = getSampleStyleSheet()
+
+title_style = styles["Title"]
+title_style.alignment = TA_CENTER
+
+elements = []
+
+# =========================
+# JUDUL
+# =========================
+
+elements.append(
+    Paragraph(
+        "SISTEM INFORMASI DATA SEKTORAL KABUPATEN BELU",
+        title_style
+    )
+)
+
+elements.append(Spacer(1, 10))
+
+elements.append(
+    Paragraph(
+        f"<b>{nama_dataset}</b>",
+        styles["Heading2"]
+    )
+)
+
+elements.append(
+    Paragraph(
+        keterangan,
+        styles["BodyText"]
+    )
+)
+
+elements.append(Spacer(1, 15))
+
+# =========================
+# INFO DATASET
+# =========================
+
+tahun_min = ""
+tahun_max = ""
+
+if "tahun" in [str(c).lower() for c in df.columns]:
+
+    for c in df.columns:
+        if str(c).lower() == "tahun":
+
             try:
-                logo = ImageReader(logo_path)
-                canvas_obj.drawImage(logo, 40, 720, width=70, height=70, mask='auto')
+                tahun_min = str(df[c].min())
+                tahun_max = str(df[c].max())
             except:
                 pass
 
-            # ================= JUDUL =================
-            canvas_obj.setFont("Helvetica-Bold", 12)
-            canvas_obj.drawString(110, 780, "PEMERINTAH KABUPATEN BELU")
+info_data = [
+    ["TOTAL DATA", str(len(df))],
+    ["JUMLAH KOLOM", str(len(df.columns))],
+    ["RENTANG DATA", f"{tahun_min} - {tahun_max}"],
+    ["ORGANISASI", opd],
+    ["UPDATE TERAKHIR", datetime.now().strftime("%d-%m-%Y")]
+]
 
-            canvas_obj.setFont("Helvetica", 10)
-            canvas_obj.drawString(110, 760, watermark_text)
+info_table = Table(
+    info_data,
+    colWidths=[150, 300]
+)
 
-            # ================= WATERMARK =================
-            
-            width, height = doc.pagesize
+info_table.setStyle(TableStyle([
+    ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#1E40AF')),
+    ('TEXTCOLOR',(0,0),(-1,-1),colors.white),
+    ('GRID',(0,0),(-1,-1),1,colors.black),
+    ('FONTNAME',(0,0),(-1,-1),'Helvetica-Bold')
+]))
 
-            canvas_obj.saveState()
+elements.append(info_table)
 
-            canvas_obj.setFont("Helvetica-Bold", 42)
-            canvas_obj.setFillGray(0.88)
+elements.append(Spacer(1, 20))
 
-            canvas_obj.drawCentredString(
-                width / 2,
-                height / 2 + 20,
-                "BIDANG STATISTIK"
-            )
+# =========================
+# DATA TABLE
+# =========================
 
-            canvas_obj.drawCentredString(
-                width / 2,
-                height / 2 - 30,
-                "DAN PERSANDIAN"
-            )
+data = [list(df.columns)]
 
-            canvas_obj.restoreState()
+for _, row in df.iterrows():
+    data.append(
+        [str(v) for v in row]
+    )
 
-            canvas_obj.restoreState()
+table = Table(
+    data,
+    repeatRows=1
+)
 
-        pdf.build([table], onFirstPage=add_header, onLaterPages=add_header)
+table.setStyle(TableStyle([
+    ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#2563EB')),
+    ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+    ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
+    ('GRID',(0,0),(-1,-1),0.5,colors.grey),
+    ('FONTSIZE',(0,0),(-1,-1),8),
+    ('ROWBACKGROUNDS',
+     (0,1),
+     (-1,-1),
+     [colors.whitesmoke, colors.lightgrey])
+]))
 
-        buffer.seek(0)
-        return buffer
+elements.append(table)
+
+elements.append(Spacer(1, 20))
+
+footer = Paragraph(
+    f"""
+    Dokumen ini dihasilkan otomatis oleh
+    Sistem Informasi Data Sektoral Kabupaten Belu
+    <br/>
+    Dicetak pada:
+    {datetime.now().strftime('%d %B %Y %H:%M')}
+    """,
+    styles["Italic"]
+)
+
+elements.append(footer)
+
+doc.build(
+    elements,
+    onFirstPage=add_header,
+    onLaterPages=add_header
+)
+
+buffer.seek(0)
+
+return buffer
+
 
     except Exception as e:
         st.error(f"Gagal membuat PDF: {e}")
         return None
 
-def get_drive_service():
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
-        scopes=[
-            "https://www.googleapis.com/auth/drive"
-        ]
-    )
 
-    return build(
-        "drive",
-        "v3",
-        credentials=creds
-    )
 
 # =====================================
 # KONFIGURASI HALAMAN
@@ -458,14 +613,14 @@ if st.button("💾 Simpan Dataset"):
     save_dataset_to_sheet(df_upload, sheet_name)
 
     metadata_sheet = get_metadata_sheet()
+    
     metadata_sheet.append_row([
         str(datetime.now().timestamp()),
         opd_select,
         nama_dataset,
         keterangan,
         sheet_name,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        pdf_link
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     ])
 
@@ -473,39 +628,7 @@ if st.button("💾 Simpan Dataset"):
 
     st.cache_data.clear()  # 🔥 refresh data cache
     st.rerun()
-    pdf_link = ""
-
-    if uploaded_pdf is not None:
-
-        drive_service = get_drive_service()
-
-        file_metadata = {
-            "name": uploaded_pdf.name
-        }
-
-        media = MediaIoBaseUpload(
-            uploaded_pdf,
-            mimetype="application/pdf",
-            resumable=True
-        )
-
-        uploaded_file_drive = drive_service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields="id"
-        ).execute()
-
-        file_id = uploaded_file_drive.get("id")
-
-        drive_service.permissions().create(
-            fileId=file_id,
-            body={
-                "type": "anyone",
-                "role": "reader"
-            }
-        ).execute()
-
-        pdf_link = f"https://drive.google.com/file/d/{file_id}/view"
+    
 
 # =====================================
 # DATASET TERSIMPAN
@@ -594,8 +717,10 @@ st.dataframe(df, use_container_width=True)
 # ==========================
 try:
     pdf_file = df_to_pdf(
-        df,
-        watermark_text=" ",
+        df=df,
+        nama_dataset=nama_dataset,
+        keterangan=keterangan,
+        opd=opd_select,
         logo_path="logo.png"
     )
 
