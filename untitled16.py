@@ -323,12 +323,25 @@ opd_select = st.sidebar.selectbox(
     "Pilih OPD",
     opd_groups[group_select]
 )
+st.sidebar.image(
+    "logo.png",
+    width=120
+)
+
+st.sidebar.title("🏢 Pusat Data Belu")
 
 # =====================================
 # HEADER
 # =====================================
-st.title(f"🏢 {opd_select}")
-st.write("Sistem Informasi Data Sektoral Kabupaten Belu")
+col_logo, col_title = st.columns([1, 6])
+
+with col_logo:
+    st.image("logo.png", width=100)
+
+with col_title:
+    st.title("SISTEM INFORMASI DATA SEKTORAL")
+    st.subheader("Kabupaten Belu")
+    st.write(f"OPD : {opd_select}")
 
 
 # =====================================
