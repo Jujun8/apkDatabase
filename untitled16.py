@@ -13,6 +13,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from io import BytesIO
+from reportlab.lib.utils import ImageReader
 st.cache_data.clear()
 st.cache_resource.clear()
 
