@@ -191,7 +191,7 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
             width, height = doc.pagesize
             canvas_obj.translate(width/2, height/2)
             canvas_obj.rotate(30)
-            canvas_obj.drawCentredString(0, 0, "BELU DATA")
+            canvas_obj.drawCentredString(0, 0, "Bidang Statistik dan Persandian")
 
             canvas_obj.restoreState()
 
@@ -518,7 +518,7 @@ st.dataframe(df, use_container_width=True)
 try:
     pdf_file = df_to_pdf(
         df,
-        watermark_text="Bidang Statistik dan Persandian",
+        watermark_text=" ",
         logo_path="logo.png"
     )
 
