@@ -239,9 +239,8 @@ keterangan,
 opd,
 logo_path=None
 ):
-buffer = BytesIO()
+    buffer = BytesIO()
 
-```
 doc = SimpleDocTemplate(
     buffer,
     pagesize=A4,
