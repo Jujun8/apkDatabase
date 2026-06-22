@@ -14,6 +14,8 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from reportlab.lib.utils import ImageReader
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 st.cache_data.clear()
 st.cache_resource.clear()
 
@@ -218,6 +220,20 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
         st.error(f"Gagal membuat PDF: {e}")
         return None
 
+def get_drive_service():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=[
+            "https://www.googleapis.com/auth/drive"
+        ]
+    )
+
+    return build(
+        "drive",
+        "v3",
+        credentials=creds
+    )
+
 # =====================================
 # KONFIGURASI HALAMAN
 # =====================================
@@ -358,6 +374,10 @@ uploaded_file = st.file_uploader(
     "Upload File CSV",
     type=["csv"]
 )
+uploaded_pdf = st.file_uploader(
+    "📄 Upload File PDF",
+    type=["pdf"]
+)
 
 if uploaded_file is not None:
 
@@ -450,12 +470,47 @@ if st.button("💾 Simpan Dataset"):
         keterangan,
         sheet_name,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        pdf_link
+
     ])
 
     st.success("✅ Dataset berhasil disimpan")
 
     st.cache_data.clear()  # 🔥 refresh data cache
     st.rerun()
+    pdf_link = ""
+
+    if uploaded_pdf is not None:
+
+        drive_service = get_drive_service()
+
+        file_metadata = {
+            "name": uploaded_pdf.name
+        }
+
+        media = MediaIoBaseUpload(
+            uploaded_pdf,
+            mimetype="application/pdf",
+            resumable=True
+        )
+
+        uploaded_file_drive = drive_service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields="id"
+        ).execute()
+
+        file_id = uploaded_file_drive.get("id")
+
+        drive_service.permissions().create(
+            fileId=file_id,
+            body={
+                "type": "anyone",
+                "role": "reader"
+            }
+        ).execute()
+
+        pdf_link = f"https://drive.google.com/file/d/{file_id}/view"
 
 # =====================================
 # DATASET TERSIMPAN
@@ -518,7 +573,12 @@ try:
 except Exception as e:
     st.error(f"Gagal membaca dataset: {e}")
     st.stop()
-
+    
+if "pdf_link" in row and row["pdf_link"]:
+    st.link_button(
+        "📄 Buka Dokumen PDF",
+        row["pdf_link"]
+    )
 # ==========================
 # VALIDASI DATA
 # ==========================
