@@ -6,8 +6,12 @@ from google.oauth2.service_account import Credentials
 import re
 from datetime import datetime
 import streamlit as st
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from io import BytesIO
 st.cache_data.clear()
 st.cache_resource.clear()
+
 
 # =====================================
 # GOOGLE SHEETS & DRIVE
@@ -138,6 +142,30 @@ def load_metadata():
         return pd.DataFrame()
 
     return pd.DataFrame(data[1:], columns=data[0])
+
+def df_to_pdf(df):
+    buffer = BytesIO()
+
+    pdf = SimpleDocTemplate(buffer)
+
+    # data tabel (header + isi)
+    data = [df.columns.tolist()] + df.astype(str).values.tolist()
+
+    table = Table(data)
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+    ]))
+
+    pdf.build([table])
+
+    buffer.seek(0)
+    return buffer
 
 
 # =====================================
@@ -448,17 +476,14 @@ try:
             # DOWNLOAD CSV
             # ==========================
 
-            csv = df.to_csv(
-                index=False
-            ).encode("utf-8")
+            pdf_file = df_to_pdf(df)
 
             st.download_button(
-                "⬇ Download CSV",
-                data=csv,
-                file_name=f"{row['nama_dataset']}.csv",
-                mime="text/csv"
+                "⬇ Download PDF",
+                data=pdf_file,
+                file_name=f"{row['nama_dataset']}.pdf",
+                mime="application/pdf"
             )
-
 except Exception as e:
      st.error(
         f"Gagal membaca dataset: {e}"
