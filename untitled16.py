@@ -173,7 +173,7 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
             # ================= LOGO =================
             try:
                 logo = ImageReader(logo_path)
-                canvas_obj.drawImage(logo, 40, 750, width=50, height=50, mask='auto')
+                canvas_obj.drawImage(logo, 40, 720, width=70, height=70, mask='auto')
             except:
                 pass
 
