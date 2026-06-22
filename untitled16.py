@@ -148,7 +148,7 @@ def load_metadata():
 
     return pd.DataFrame(data[1:], columns=data[0])
 
-def df_to_pdf(df, watermark_text="SISTEM DATA BELU"):
+def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
     buffer = BytesIO()
 
     try:
@@ -167,19 +167,49 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU"):
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ]))
 
-        def add_watermark(canvas_obj, doc):
+        def add_header(canvas_obj, doc):
             canvas_obj.saveState()
+
+            # =====================
+            # LOGO
+            # =====================
+            try:
+                from reportlab.lib.utils import ImageReader
+                logo = ImageReader(logo_path)
+
+                canvas_obj.drawImage(
+                    logo,
+                    40, 750,
+                    width=50,
+                    height=50,
+                    mask='auto'
+                )
+            except:
+                pass  # kalau logo tidak ada
+
+            # =====================
+            # JUDUL
+            # =====================
+            canvas_obj.setFont("Helvetica-Bold", 12)
+            canvas_obj.drawString(110, 780, "PEMERINTAH KABUPATEN BELU")
+
+            canvas_obj.setFont("Helvetica", 10)
+            canvas_obj.drawString(110, 760, watermark_text)
+
+            # =====================
+            # WATERMARK
+            # =====================
             canvas_obj.setFont("Helvetica-Bold", 60)
             canvas_obj.setFillGray(0.92)
 
             width, height = doc.pagesize
             canvas_obj.translate(width/2, height/2)
             canvas_obj.rotate(30)
+            canvas_obj.drawCentredString(0, 0, "BELU DATA")
 
-            canvas_obj.drawCentredString(0, 0, watermark_text)
             canvas_obj.restoreState()
 
-        pdf.build([table], onFirstPage=add_watermark, onLaterPages=add_watermark)
+        pdf.build([table], onFirstPage=add_header, onLaterPages=add_header)
 
         buffer.seek(0)
         return buffer
@@ -542,13 +572,10 @@ try:
             # DOWNLOAD PDF
             # ==========================
 
-            pdf_file = df_to_pdf(df, logo_path="logo.png")
-
-            st.download_button(
-                "⬇ Download PDF",
-                data=pdf_file,
-                file_name=f"{row['nama_dataset']}.pdf",
-                mime="application/pdf"
+            pdf_file = df_to_pdf(
+                df,
+                watermark_text="SISTEM DATA BELU",
+                logo_path="logo.png"
             )
 except Exception as e:
      st.error(
