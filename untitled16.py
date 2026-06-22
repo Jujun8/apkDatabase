@@ -148,28 +148,45 @@ def load_metadata():
 
     return pd.DataFrame(data[1:], columns=data[0])
 
-def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
+def df_to_pdf(df, watermark_text="SISTEM DATA BELU"):
     buffer = BytesIO()
 
-    pdf = SimpleDocTemplate(buffer)
+    try:
+        pdf = SimpleDocTemplate(buffer)
 
-    data = [df.columns.tolist()] + df.astype(str).values.tolist()
+        data = [df.columns.tolist()] + df.astype(str).values.tolist()
 
-    table = Table(data)
+        table = Table(data)
 
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 7),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-    ]))
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ]))
 
-    def draw_header(canvas_obj, doc):
+        def add_watermark(canvas_obj, doc):
+            canvas_obj.saveState()
+            canvas_obj.setFont("Helvetica-Bold", 60)
+            canvas_obj.setFillGray(0.92)
 
-        canvas_obj.saveState()
+            width, height = doc.pagesize
+            canvas_obj.translate(width/2, height/2)
+            canvas_obj.rotate(30)
 
+            canvas_obj.drawCentredString(0, 0, watermark_text)
+            canvas_obj.restoreState()
+
+        pdf.build([table], onFirstPage=add_watermark, onLaterPages=add_watermark)
+
+        buffer.seek(0)
+        return buffer
+
+    except Exception as e:
+        st.error(f"Gagal membuat PDF: {e}")
+        return None
         # =========================
         # LOGO
         # =========================
