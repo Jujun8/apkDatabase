@@ -233,157 +233,157 @@ def add_header(canvas_obj, doc):
     canvas_obj.restoreState()
 
 def df_to_pdf(
-df,
-nama_dataset,
-keterangan,
-opd,
-logo_path=None
+    df,
+    nama_dataset,
+    keterangan,
+    opd,
+    logo_path=None
 ):
     buffer = BytesIO()
 
-doc = SimpleDocTemplate(
-    buffer,
-    pagesize=A4,
-    topMargin=80,
-    bottomMargin=40
-)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=80,
+        bottomMargin=40
+    )
 
-styles = getSampleStyleSheet()
+    styles = getSampleStyleSheet()
 
-title_style = styles["Title"]
-title_style.alignment = TA_CENTER
+    title_style = styles["Title"]
+    title_style.alignment = TA_CENTER
 
-elements = []
+    elements = []
 
 # =========================
 # JUDUL
 # =========================
 
-elements.append(
-    Paragraph(
-        "SISTEM INFORMASI DATA SEKTORAL KABUPATEN BELU",
-        title_style
+    elements.append(
+        Paragraph(
+            "SISTEM INFORMASI DATA SEKTORAL KABUPATEN BELU",
+            title_style
+        )
     )
-)
 
-elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 10))
 
-elements.append(
-    Paragraph(
-        f"<b>{nama_dataset}</b>",
-        styles["Heading2"]
+    elements.append(
+        Paragraph(
+            f"<b>{nama_dataset}</b>",
+            styles["Heading2"]
+        )
     )
-)
 
-elements.append(
-    Paragraph(
-        keterangan,
-        styles["BodyText"]
+    elements.append(
+        Paragraph(
+            keterangan,
+            styles["BodyText"]
+        )
     )
-)
 
-elements.append(Spacer(1, 15))
+    elements.append(Spacer(1, 15))
 
 # =========================
 # INFO DATASET
 # =========================
 
-tahun_min = ""
-tahun_max = ""
+    tahun_min = ""
+    tahun_max = ""
 
-if "tahun" in [str(c).lower() for c in df.columns]:
+    if "tahun" in [str(c).lower() for c in df.columns]:
 
-    for c in df.columns:
-        if str(c).lower() == "tahun":
+        for c in df.columns:
+            if str(c).lower() == "tahun":
+    
+                try:
+                    tahun_min = str(df[c].min())
+                    tahun_max = str(df[c].max())
+                except:
+                    pass
 
-            try:
-                tahun_min = str(df[c].min())
-                tahun_max = str(df[c].max())
-            except:
-                pass
+    info_data = [
+        ["TOTAL DATA", str(len(df))],
+        ["JUMLAH KOLOM", str(len(df.columns))],
+        ["RENTANG DATA", f"{tahun_min} - {tahun_max}"],
+        ["ORGANISASI", opd],
+        ["UPDATE TERAKHIR", datetime.now().strftime("%d-%m-%Y")]
+    ]
 
-info_data = [
-    ["TOTAL DATA", str(len(df))],
-    ["JUMLAH KOLOM", str(len(df.columns))],
-    ["RENTANG DATA", f"{tahun_min} - {tahun_max}"],
-    ["ORGANISASI", opd],
-    ["UPDATE TERAKHIR", datetime.now().strftime("%d-%m-%Y")]
-]
+    info_table = Table(
+        info_data,
+        colWidths=[150, 300]
+    )
 
-info_table = Table(
-    info_data,
-    colWidths=[150, 300]
-)
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#1E40AF')),
+        ('TEXTCOLOR',(0,0),(-1,-1),colors.white),
+        ('GRID',(0,0),(-1,-1),1,colors.black),
+        ('FONTNAME',(0,0),(-1,-1),'Helvetica-Bold')
+    ]))
 
-info_table.setStyle(TableStyle([
-    ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#1E40AF')),
-    ('TEXTCOLOR',(0,0),(-1,-1),colors.white),
-    ('GRID',(0,0),(-1,-1),1,colors.black),
-    ('FONTNAME',(0,0),(-1,-1),'Helvetica-Bold')
-]))
+    elements.append(info_table)
 
-elements.append(info_table)
-
-elements.append(Spacer(1, 20))
+    elements.append(Spacer(1, 20))
 
 # =========================
 # DATA TABLE
 # =========================
 
-data = [list(df.columns)]
+    data = [list(df.columns)]
 
-for _, row in df.iterrows():
-    data.append(
-        [str(v) for v in row]
+    for _, row in df.iterrows():
+        data.append(
+            [str(v) for v in row]
+        )
+
+    table = Table(
+        data,
+        repeatRows=1
     )
 
-table = Table(
-    data,
-    repeatRows=1
-)
+    table.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#2563EB')),
+        ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
+        ('GRID',(0,0),(-1,-1),0.5,colors.grey),
+        ('FONTSIZE',(0,0),(-1,-1),8),
+        ('ROWBACKGROUNDS',
+         (0,1),
+         (-1,-1),
+         [colors.whitesmoke, colors.lightgrey])
+    ]))
 
-table.setStyle(TableStyle([
-    ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#2563EB')),
-    ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-    ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
-    ('GRID',(0,0),(-1,-1),0.5,colors.grey),
-    ('FONTSIZE',(0,0),(-1,-1),8),
-    ('ROWBACKGROUNDS',
-     (0,1),
-     (-1,-1),
-     [colors.whitesmoke, colors.lightgrey])
-]))
+    elements.append(table)
 
-elements.append(table)
+    elements.append(Spacer(1, 20))
 
-elements.append(Spacer(1, 20))
+    footer = Paragraph(
+        f"""
+        Dokumen ini dihasilkan otomatis oleh
+        Sistem Informasi Data Sektoral Kabupaten Belu
+        <br/>
+        Dicetak pada:
+        {datetime.now().strftime('%d %B %Y %H:%M')}
+        """,
+        styles["Italic"]
+    )
 
-footer = Paragraph(
-    f"""
-    Dokumen ini dihasilkan otomatis oleh
-    Sistem Informasi Data Sektoral Kabupaten Belu
-    <br/>
-    Dicetak pada:
-    {datetime.now().strftime('%d %B %Y %H:%M')}
-    """,
-    styles["Italic"]
-)
+    elements.append(footer)
 
-elements.append(footer)
+    doc.build(
+        elements,
+        onFirstPage=add_header,
+        onLaterPages=add_header
+    )
 
-doc.build(
-    elements,
-    onFirstPage=add_header,
-    onLaterPages=add_header
-)
+    buffer.seek(0)
 
-buffer.seek(0)
+    return buffer
 
-return buffer
-
-except Exception as e:
-    st.error(f"Gagal membuat PDF: {e}")
-    return None
+        except Exception as e:
+            st.error(f"Gagal membuat PDF: {e}")
+            return None
 
 
 
