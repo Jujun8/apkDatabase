@@ -382,7 +382,7 @@ buffer.seek(0)
 return buffer
 
 
-    except Exception as e:
+        except Exception as e:
         st.error(f"Gagal membuat PDF: {e}")
         return None
 
