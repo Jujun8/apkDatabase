@@ -208,7 +208,7 @@ def df_to_pdf(df, watermark_text="SISTEM DATA BELU", logo_path="logo.png"):
                 "DAN PERSANDIAN"
             )
 
-canvas_obj.restoreState()
+            canvas_obj.restoreState()
 
             canvas_obj.restoreState()
 
