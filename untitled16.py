@@ -16,6 +16,7 @@ from io import BytesIO
 from reportlab.lib.utils import ImageReader
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (
     SimpleDocTemplate,
     Table,
