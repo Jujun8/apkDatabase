@@ -193,11 +193,17 @@ def add_header(canvas_obj, doc):
         "PEMERINTAH KABUPATEN BELU"
     )
 
-    canvas_obj.setFont("Helvetica", 10)
+    canvas_obj.setFont("Helvetica", 11)
     canvas_obj.drawString(
         110,
         height - 55,
-        "Sistem Informasi Data Sektoral"
+        "Dinas Komunikasi dan Informatika"
+    )
+    canvas_obj.setFont("Helvetica", 10)
+    canvas_obj.drawString(
+        110,
+        height - 65,
+        "Statistik dan Persandian"
     )
 
     # WATERMARK
@@ -212,7 +218,7 @@ def add_header(canvas_obj, doc):
     canvas_obj.drawCentredString(
         width / 2,
         height / 2,
-        "BIDANG STATISTIK DAN PERSANDIAN"
+        " "
     )
 
     canvas_obj.restoreState()
@@ -285,47 +291,7 @@ def df_to_pdf(
 
     elements.append(Spacer(1, 15))
 
-# =========================
-# INFO DATASET
-# =========================
 
-    tahun_min = ""
-    tahun_max = ""
-
-    if "tahun" in [str(c).lower() for c in df.columns]:
-
-        for c in df.columns:
-            if str(c).lower() == "tahun":
-    
-                try:
-                    tahun_min = str(df[c].min())
-                    tahun_max = str(df[c].max())
-                except:
-                    pass
-
-    info_data = [
-        ["TOTAL DATA", str(len(df))],
-        ["JUMLAH KOLOM", str(len(df.columns))],
-        ["RENTANG DATA", f"{tahun_min} - {tahun_max}"],
-        ["ORGANISASI", opd],
-        ["UPDATE TERAKHIR", datetime.now().strftime("%d-%m-%Y")]
-    ]
-
-    info_table = Table(
-        info_data,
-        colWidths=[150, 300]
-    )
-
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#1E40AF')),
-        ('TEXTCOLOR',(0,0),(-1,-1),colors.white),
-        ('GRID',(0,0),(-1,-1),1,colors.black),
-        ('FONTNAME',(0,0),(-1,-1),'Helvetica-Bold')
-    ]))
-
-    elements.append(info_table)
-
-    elements.append(Spacer(1, 20))
 
 # =========================
 # DATA TABLE
